@@ -9,7 +9,7 @@ public static class ApplicationServiceRegistration
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        services.AddAutoMapper(typeof(HrSystemMappingProfile).Assembly);
+        services.AddAutoMapper(_ => { }, typeof(HrSystemMappingProfile).Assembly);
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IEmployeeService, EmployeeService>();
