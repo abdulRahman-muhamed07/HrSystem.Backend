@@ -9,7 +9,7 @@ Production-style HR management API built with ASP.NET Core and Clean Architectur
 - API: controllers, middleware, authentication, rate limiting, and OpenAPI.
 
 ## Application Structure
-Each DTO and abstraction is kept in its own file and grouped by responsibility:
+Each DTO and abstraction is kept in its own file and grouped by responsibility.
 
 ```text
 src/HrSystem.Application
