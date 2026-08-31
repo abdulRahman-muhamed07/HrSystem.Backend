@@ -22,7 +22,6 @@ public sealed class EmployeeService(
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, 100);
         var term = search?.Trim();
-
         var total = await employees.CountSearchAsync(term, ct);
         var entities = await employees.SearchAsync(term, page, pageSize, ct);
         return new(mapper.Map<List<EmployeeListItem>>(entities), page, pageSize, total);
@@ -36,8 +35,7 @@ public sealed class EmployeeService(
 
     public async Task<int> CreateAsync(CreateEmployeeRequest request, CancellationToken ct)
     {
-        await createValidator.ValidateAndThrowAsync(request, ct);
-
+        await createValidator.ValidateApplicationRequestAsync(request, ct);
         if (await departments.GetByIdAsync(request.DepartmentId, ct) is null)
             throw new NotFoundException("Department was not found.");
 
@@ -57,14 +55,12 @@ public sealed class EmployeeService(
 
     public async Task UpdateAsync(int id, UpdateEmployeeRequest request, CancellationToken ct)
     {
-        await updateValidator.ValidateAndThrowAsync(request, ct);
-
+        await updateValidator.ValidateApplicationRequestAsync(request, ct);
         var employee = await employees.GetByIdAsync(id, ct)
             ?? throw new NotFoundException("Employee was not found.");
 
         if (employee.Version != request.Version)
             throw new ConcurrencyConflictException();
-
         if (await departments.GetByIdAsync(request.DepartmentId, ct) is null)
             throw new NotFoundException("Department was not found.");
 
