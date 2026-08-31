@@ -4,7 +4,7 @@ namespace HrSystem.Application.Validation;
 
 public static class ValidationExtensions
 {
-    public static async Task ValidateAndThrowAsync<T>(this IValidator<T> validator, T instance, CancellationToken ct)
+    public static async Task ValidateApplicationRequestAsync<T>(this IValidator<T> validator, T instance, CancellationToken ct)
     {
         var result = await validator.ValidateAsync(instance, ct);
         if (!result.IsValid)
