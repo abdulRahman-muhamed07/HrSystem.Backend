@@ -23,8 +23,6 @@ public static class InfrastructureServiceRegistration
                 options.UseSqlite(connectionString);
         });
 
-        services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
