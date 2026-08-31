@@ -1,4 +1,4 @@
-namespace HrSystem.Application;
+namespace HrSystem.Application.Models.Common;
 
 public sealed record PagedResult<T>(IReadOnlyCollection<T> Items, int Page, int PageSize, int TotalCount)
 {
