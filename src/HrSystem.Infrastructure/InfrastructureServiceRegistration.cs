@@ -1,6 +1,7 @@
 using HrSystem.Application;
 using HrSystem.Infrastructure.Auditing;
 using HrSystem.Infrastructure.Persistence;
+using HrSystem.Infrastructure.Persistence.Repositories;
 using HrSystem.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
