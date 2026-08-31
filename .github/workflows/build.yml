@@ -2,12 +2,12 @@ name: Build
 
 on:
   push:
-    branches: [ "master", "refactor/clean-architecture" ]
+    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,3 +16,4 @@ jobs:
           dotnet-version: '10.0.x'
       - run: dotnet restore HrSystem.Backend.slnx
       - run: dotnet build HrSystem.Backend.slnx --configuration Release --no-restore
+      - run: dotnet test HrSystem.Backend.slnx --configuration Release --no-build --verbosity normal
