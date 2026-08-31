@@ -17,3 +17,5 @@ jobs:
       - run: dotnet restore HrSystem.Backend.slnx
       - run: dotnet build HrSystem.Backend.slnx --configuration Release --no-restore
       - run: dotnet test HrSystem.Backend.slnx --configuration Release --no-build --verbosity normal
+
+# Senior review verification: restore, build, and test the complete solution.
