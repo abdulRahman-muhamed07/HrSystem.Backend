@@ -7,6 +7,7 @@ namespace HrSystem.Application.Services;
 public sealed class UserService(
     IRepository<User> users,
     IUnitOfWork unitOfWork,
+    IAuditService audit,
     IMapper mapper) : IUserService
 {
     public async Task<IReadOnlyCollection<UserDto>> GetAllAsync(CancellationToken ct)
@@ -30,5 +31,6 @@ public sealed class UserService(
         else entity.Deactivate();
 
         await unitOfWork.SaveChangesAsync(ct);
+        await audit.WriteAsync(isActive ? "Activate" : "Deactivate", nameof(User), id.ToString(), $"User {entity.Email} active state changed to {isActive}.", ct);
     }
 }
