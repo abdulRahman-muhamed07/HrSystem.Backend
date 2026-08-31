@@ -42,8 +42,7 @@ public sealed class LeaveService(
         return await unitOfWork.ExecuteInTransactionAsync(async token =>
         {
             var year = request.StartDate.Year;
-            var balance = (await balances.QueryAsync(
-                b => b,
+            var balance = (await balances.QueryAsync(b => b,
                 b => b.EmployeeId == request.EmployeeId && b.LeaveTypeId == request.LeaveTypeId && b.Year == year,
                 0, 1, token)).FirstOrDefault();
 
@@ -81,6 +80,9 @@ public sealed class LeaveService(
 
     public async Task DecideAsync(int id, LeaveDecisionRequest request, CancellationToken ct)
     {
+        if (request.Version == Guid.Empty)
+            throw new ValidationException("A leave version is required for concurrency control.");
+
         var userId = currentUser.UserId ?? throw new BusinessRuleException("Authenticated user is required.");
 
         await unitOfWork.ExecuteInTransactionAsync(async token =>
@@ -88,11 +90,13 @@ public sealed class LeaveService(
             var leave = await leaves.GetByIdAsync(id, token)
                 ?? throw new NotFoundException("Leave request was not found.");
 
+            if (leave.Version != request.Version)
+                throw new ConcurrencyConflictException();
+
             if (leave.Status != LeaveRequestStatus.Pending)
                 throw new BusinessRuleException("Only pending leave requests can be decided.");
 
-            var balance = (await balances.QueryAsync(
-                b => b,
+            var balance = (await balances.QueryAsync(b => b,
                 b => b.EmployeeId == leave.EmployeeId && b.LeaveTypeId == leave.LeaveTypeId && b.Year == leave.StartDate.Year,
                 0, 1, token)).FirstOrDefault();
 
