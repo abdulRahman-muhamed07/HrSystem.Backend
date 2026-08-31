@@ -1,4 +1,4 @@
-namespace HrSystem.Application.Models.Leaves;
+namespace HrSystem.Application;
 
 public sealed record CreateLeaveTypeRequest(
     string Name,
