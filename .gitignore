@@ -1,21 +1,15 @@
 # .NET build output
 bin/
 obj/
-
-# User-specific files
 *.user
 *.suo
 .vs/
-
-# Test results
+.idea/
+.vscode/
 TestResults/
 coverage/
 
-# IDE
-.idea/
-.vscode/
-
-# Local databases and runtime files
+# Local databases / runtime files
 *.db
 *.db-shm
 *.db-wal
@@ -23,10 +17,6 @@ coverage/
 *.sqlite3
 
 # Secrets / local configuration
-appsettings.Local.json
 .env
 .env.*
-
-# OS
-.DS_Store
-Thumbs.db
+appsettings.Local.json
