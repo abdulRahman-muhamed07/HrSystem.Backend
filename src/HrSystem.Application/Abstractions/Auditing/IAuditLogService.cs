@@ -1,3 +1,5 @@
+using HrSystem.Application.Models.Auditing;
+
 namespace HrSystem.Application;
 
 public interface IAuditLogService
