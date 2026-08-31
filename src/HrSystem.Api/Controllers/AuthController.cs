@@ -15,10 +15,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     [EnableRateLimiting("login")]
     [HttpPost("register")]
     public async Task<ActionResult<LoginResponse>> Register(RegisterRequest request, CancellationToken ct)
-    {
-        var result = await authService.RegisterAsync(request, ct);
-        return StatusCode(StatusCodes.Status201Created, result);
-    }
+        => StatusCode(StatusCodes.Status201Created, await authService.RegisterAsync(request, ct));
 
     [AllowAnonymous]
     [EnableRateLimiting("login")]
@@ -29,21 +26,25 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
         return result is null ? Unauthorized(new { message = "Invalid credentials." }) : Ok(result);
     }
 
+    [AllowAnonymous]
+    [EnableRateLimiting("login")]
+    [HttpPost("refresh")]
+    public async Task<ActionResult<LoginResponse>> Refresh(RefreshTokenRequest request, CancellationToken ct)
+    {
+        var result = await authService.RefreshAsync(request, ct);
+        return result is null ? Unauthorized(new { message = "Invalid or expired refresh token." }) : Ok(result);
+    }
+
     [Authorize]
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout(CancellationToken ct)
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest? request, CancellationToken ct)
     {
         var jti = User.FindFirstValue(JwtRegisteredClaimNames.Jti);
         var exp = User.FindFirstValue(JwtRegisteredClaimNames.Exp);
-
         if (string.IsNullOrWhiteSpace(jti) || !long.TryParse(exp, out var expUnix))
             return BadRequest(new { message = "The access token is missing a valid identifier or expiration." });
 
-        await authService.LogoutAsync(
-            jti,
-            DateTimeOffset.FromUnixTimeSeconds(expUnix),
-            ct);
-
+        await authService.LogoutAsync(jti, DateTimeOffset.FromUnixTimeSeconds(expUnix), request?.RefreshToken, ct);
         return NoContent();
     }
 }
