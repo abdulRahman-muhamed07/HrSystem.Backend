@@ -8,6 +8,7 @@ public sealed class AuthService(
     IRepository<User> users,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
+    ITokenRevocationService tokenRevocation,
     IAuditService audit,
     IUnitOfWork unitOfWork) : IAuthService
 {
@@ -60,5 +61,14 @@ public sealed class AuthService(
         await audit.WriteAsync("Register", nameof(User), user.Id.ToString(), null, ct);
 
         return new(token, expiresAt, user.Id, user.FullName, user.Role, user.EmployeeId);
+    }
+
+    public async Task LogoutAsync(string jti, DateTimeOffset expiresAt, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(jti))
+            throw new BusinessRuleException("Token identifier is required.");
+
+        await tokenRevocation.RevokeAsync(jti, expiresAt, ct);
+        await audit.WriteAsync("Logout", nameof(User), "current", null, ct);
     }
 }
