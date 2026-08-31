@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using HrSystem.Api.Extensions;
 using HrSystem.Api.Security;
@@ -37,7 +38,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     {
         OnTokenValidated = async context =>
         {
-            var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
+            var jti = context.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
             if (string.IsNullOrWhiteSpace(jti))
             {
                 context.Fail("Token identifier is missing.");
