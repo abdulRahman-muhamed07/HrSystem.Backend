@@ -1,11 +1,11 @@
 using AutoMapper;
-using FluentValidation.TestHelper;
 using HrSystem.Application.Mapping;
 using HrSystem.Application.Models.Authentication;
-using HrSystem.Application.Models.Employees;
 using HrSystem.Application.Models.Common;
+using HrSystem.Application.Models.Employees;
 using HrSystem.Application.Validators.Authentication;
 using HrSystem.Application.Validators.Employees;
+using HrSystem.Domain.Enums;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -34,16 +34,18 @@ public sealed class ApplicationTests
     public void RegisterValidator_ShouldRejectWeakPassword()
     {
         var validator = new RegisterRequestValidator();
-        var result = validator.TestValidate(new RegisterRequest("Test User", "user@example.com", "123"));
-        result.ShouldHaveValidationErrorFor(x => x.Password);
+        var result = validator.Validate(new RegisterRequest("Test User", "user@example.com", "123"));
+        Assert.IsFalse(result.IsValid);
+        Assert.IsTrue(result.Errors.Any(x => x.PropertyName == nameof(RegisterRequest.Password)));
     }
 
     [TestMethod]
     public void LoginValidator_ShouldRejectInvalidEmail()
     {
         var validator = new LoginRequestValidator();
-        var result = validator.TestValidate(new LoginRequest("not-an-email", "password"));
-        result.ShouldHaveValidationErrorFor(x => x.Email);
+        var result = validator.Validate(new LoginRequest("not-an-email", "password"));
+        Assert.IsFalse(result.IsValid);
+        Assert.IsTrue(result.Errors.Any(x => x.PropertyName == nameof(LoginRequest.Email)));
     }
 
     [TestMethod]
@@ -51,9 +53,9 @@ public sealed class ApplicationTests
     {
         var validator = new UpdateEmployeeRequestValidator();
         var request = new UpdateEmployeeRequest(Guid.Empty, "User", "user@example.com", "Developer", 1, 1000m,
-            HrSystem.Domain.Enums.EmploymentType.FullTime, HrSystem.Domain.Enums.EmploymentStatus.Active,
-            null, null, 0, 0, 0);
-        var result = validator.TestValidate(request);
-        result.ShouldHaveValidationErrorFor(x => x.Version);
+            EmploymentType.FullTime, EmploymentStatus.Active, null, null, 0, 0, 0);
+        var result = validator.Validate(request);
+        Assert.IsFalse(result.IsValid);
+        Assert.IsTrue(result.Errors.Any(x => x.PropertyName == nameof(UpdateEmployeeRequest.Version)));
     }
 }
