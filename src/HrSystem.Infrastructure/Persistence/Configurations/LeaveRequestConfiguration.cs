@@ -9,6 +9,7 @@ public sealed class LeaveRequestConfiguration : IEntityTypeConfiguration<LeaveRe
     public void Configure(EntityTypeBuilder<LeaveRequest> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.Version).IsConcurrencyToken();
         builder.Property(x => x.Reason).HasMaxLength(1000).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
         builder.Property(x => x.DurationDays).HasPrecision(5, 1);

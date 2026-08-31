@@ -2,9 +2,10 @@ using HrSystem.Domain.Enums;
 
 namespace HrSystem.Domain.Entities;
 
-public sealed class Employee
+public sealed class Employee : IConcurrencyTracked
 {
     public int Id { get; private set; }
+    public Guid Version { get; private set; } = Guid.NewGuid();
     public string FullName { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
     public string? NationalId { get; private set; }

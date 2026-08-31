@@ -34,6 +34,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IPayrollRepository, PayrollRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddSingleton<ITokenRevocationService, InMemoryTokenRevocationService>();
         services.AddScoped<IAuditService, AuditService>();
 

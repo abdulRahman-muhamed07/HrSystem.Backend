@@ -1,4 +1,5 @@
 using HrSystem.Application;
+using HrSystem.Domain;
 using HrSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,7 @@ namespace HrSystem.Infrastructure.Persistence;
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IUnitOfWork
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
@@ -22,5 +24,40 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (var entry in ChangeTracker.Entries<IConcurrencyTracked>())
+        {
+            if (entry.State == EntityState.Added)
+                entry.Property(nameof(IConcurrencyTracked.Version)).CurrentValue = Guid.NewGuid();
+            else if (entry.State == EntityState.Modified)
+                entry.Property(nameof(IConcurrencyTracked.Version)).CurrentValue = Guid.NewGuid();
+        }
+
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<TResult> ExecuteInTransactionAsync<TResult>(
+        Func<CancellationToken, Task<TResult>> action,
+        CancellationToken cancellationToken = default)
+    {
+        var strategy = Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                var result = await action(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return result;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
     }
 }

@@ -1,7 +1,9 @@
 using AutoMapper;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using HrSystem.Application.Mapping;
 using HrSystem.Application.Services;
+using HrSystem.Application.Validators.Authentication;
 
 namespace HrSystem.Application;
 
@@ -10,6 +12,7 @@ public static class ApplicationServiceRegistration
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddAutoMapper(_ => { }, typeof(HrSystemMappingProfile).Assembly);
+        services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>(ServiceLifetime.Scoped);
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IEmployeeService, EmployeeService>();
