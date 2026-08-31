@@ -18,10 +18,20 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
         var audience = configuration["Jwt:Audience"] ?? "HrSystem.Client";
         var minutes = configuration.GetValue("Jwt:ExpirationMinutes", 60);
         var expires = DateTime.UtcNow.AddMinutes(minutes);
+        var jti = Guid.NewGuid().ToString("N");
         var credentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256);
-        var token = new JwtSecurityToken(issuer, audience,
-            [new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()), new Claim(ClaimTypes.Name, user.FullName), new Claim(ClaimTypes.Email, user.Email), new Claim(ClaimTypes.Role, user.Role.ToString())],
-            expires: expires, signingCredentials: credentials);
+        var token = new JwtSecurityToken(
+            issuer,
+            audience,
+            [
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, jti),
+                new Claim(ClaimTypes.Name, user.FullName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            ],
+            expires: expires,
+            signingCredentials: credentials);
         return (new JwtSecurityTokenHandler().WriteToken(token), expires);
     }
 }
