@@ -15,26 +15,18 @@ public sealed class DashboardService(
         if (month is < 1 or > 12)
             throw new ArgumentOutOfRangeException(nameof(month), "Month must be between 1 and 12.");
 
-        var employeeCountTask = employees.CountAsync(null, ct);
-        var activeEmployeeTask = employees.CountAsync(e => e.EmploymentStatus == EmploymentStatus.Active, ct);
-        var pendingLeavesTask = leaves.CountAsync(l => l.Status == LeaveRequestStatus.Pending, ct);
-        var pendingOvertimeTask = overtime.CountAsync(o => o.Status == OvertimeStatus.Pending, ct);
-        var pendingLoansTask = loans.CountAsync(l => l.Status == LoanStatus.Pending, ct);
-        var payrollNetTask = payroll.QueryAsync(
+        var employeeCount = await employees.CountAsync(null, ct);
+        var activeEmployeeCount = await employees.CountAsync(e => e.EmploymentStatus == EmploymentStatus.Active, ct);
+        var pendingLeaves = await leaves.CountAsync(l => l.Status == LeaveRequestStatus.Pending, ct);
+        var pendingOvertime = await overtime.CountAsync(o => o.Status == OvertimeStatus.Pending, ct);
+        var pendingLoans = await loans.CountAsync(l => l.Status == LoanStatus.Pending, ct);
+        var payrollNet = (await payroll.QueryAsync(
             p => p.NetSalary,
             p => p.Year == year && p.Month == month,
             0,
             int.MaxValue,
-            ct);
+            ct)).Sum();
 
-        await Task.WhenAll(employeeCountTask, activeEmployeeTask, pendingLeavesTask, pendingOvertimeTask, pendingLoansTask, payrollNetTask);
-
-        return new DashboardDto(
-            employeeCountTask.Result,
-            activeEmployeeTask.Result,
-            pendingLeavesTask.Result,
-            pendingOvertimeTask.Result,
-            pendingLoansTask.Result,
-            payrollNetTask.Result.Sum());
+        return new DashboardDto(employeeCount, activeEmployeeCount, pendingLeaves, pendingOvertime, pendingLoans, payrollNet);
     }
 }
