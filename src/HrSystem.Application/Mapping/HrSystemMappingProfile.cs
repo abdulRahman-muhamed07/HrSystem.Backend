@@ -32,7 +32,7 @@ public sealed class HrSystemMappingProfile : Profile
         CreateMap<AttendanceRecord, AttendanceDto>();
 
         CreateMap<LeaveRequest, LeaveRequestDto>().ConstructUsing(s =>
-            new LeaveRequestDto(s.Id, s.Version, s.EmployeeId, s.Employee?.FullName ?? string.Empty,
+            new LeaveRequestDto(s.Id, s.EmployeeId, s.Employee?.FullName ?? string.Empty,
                 s.LeaveTypeId, s.LeaveType?.Name ?? string.Empty, s.StartDate, s.EndDate,
                 s.DurationDays, s.Reason, s.Status, s.RejectionReason));
 
