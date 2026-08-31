@@ -3,4 +3,7 @@
   <Project Path="src/HrSystem.Application/HrSystem.Application.csproj" />
   <Project Path="src/HrSystem.Infrastructure/HrSystem.Infrastructure.csproj" />
   <Project Path="src/HrSystem.Api/HrSystem.Api.csproj" />
+  <Project Path="tests/HrSystem.Application.Tests/HrSystem.Application.Tests.csproj" />
+  <Project Path="tests/HrSystem.Domain.Tests/HrSystem.Domain.Tests.csproj" />
+  <Project Path="tests/HrSystem.Infrastructure.Tests/HrSystem.Infrastructure.Tests.csproj" />
 </Solution>
