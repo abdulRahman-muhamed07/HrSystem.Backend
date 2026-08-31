@@ -5,7 +5,7 @@ using HrSystem.Domain.Entities;
 namespace HrSystem.Application.Services;
 
 public sealed class DepartmentService(
-    IRepository<Department> departments,
+    IDepartmentRepository departments,
     IRepository<Employee> employees,
     IUnitOfWork unitOfWork,
     IAuditService audit,
@@ -13,9 +13,8 @@ public sealed class DepartmentService(
 {
     public async Task<IReadOnlyCollection<DepartmentDto>> GetAllAsync(CancellationToken ct)
     {
-        var departmentsList = await departments.QueryAsync(d => d, null, 0, int.MaxValue, ct);
-        var result = mapper.Map<List<DepartmentDto>>(departmentsList);
-        return result;
+        var entities = await departments.GetAllWithEmployeesAsync(ct);
+        return mapper.Map<List<DepartmentDto>>(entities);
     }
 
     public async Task<DepartmentDto?> GetByIdAsync(int id, CancellationToken ct)
