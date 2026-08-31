@@ -24,7 +24,8 @@ public sealed class HrSystemMappingProfile : Profile
                 s.JobTitle,
                 s.Department == null ? string.Empty : s.Department.Name,
                 s.EmploymentStatus,
-                s.Salary));
+                s.Salary))
+            .ForMember(d => d.Status, o => o.Ignore());
 
         CreateMap<Employee, EmployeeDetails>()
             .ConstructUsing(s => new EmployeeDetails(
@@ -50,7 +51,8 @@ public sealed class HrSystemMappingProfile : Profile
                 s.Id,
                 s.Name,
                 s.Description,
-                s.Employees.Count));
+                s.Employees.Count))
+            .ForMember(d => d.EmployeeCount, o => o.Ignore());
 
         CreateMap<AttendanceRecord, AttendanceDto>();
 
@@ -66,7 +68,8 @@ public sealed class HrSystemMappingProfile : Profile
                 s.DurationDays,
                 s.Reason,
                 s.Status,
-                s.RejectionReason));
+                s.RejectionReason))
+            .ForMember(d => d.EmployeeName, o => o.Ignore());
 
         CreateMap<EmployeeLoan, LoanDto>()
             .ConstructUsing(s => new LoanDto(
@@ -78,7 +81,8 @@ public sealed class HrSystemMappingProfile : Profile
                 s.MonthlyDeduction,
                 s.RemainingAmount,
                 s.Reason,
-                s.Status));
+                s.Status))
+            .ForMember(d => d.EmployeeName, o => o.Ignore());
 
         CreateMap<OvertimeRequest, OvertimeDto>()
             .ConstructUsing(s => new OvertimeDto(
@@ -89,7 +93,8 @@ public sealed class HrSystemMappingProfile : Profile
                 s.Hours,
                 s.RateMultiplier,
                 s.Reason,
-                s.Status));
+                s.Status))
+            .ForMember(d => d.EmployeeName, o => o.Ignore());
 
         CreateMap<PayrollRecord, PayrollDto>()
             .ConstructUsing(s => new PayrollDto(
@@ -103,7 +108,8 @@ public sealed class HrSystemMappingProfile : Profile
                 s.OvertimePay,
                 s.LoanDeduction,
                 s.Status,
-                s.PaidAt));
+                s.PaidAt))
+            .ForMember(d => d.EmployeeName, o => o.Ignore());
 
         CreateMap<User, UserDto>();
         CreateMap<LeaveType, LeaveTypeDto>();
@@ -118,7 +124,9 @@ public sealed class HrSystemMappingProfile : Profile
                 s.EntitledDays,
                 s.UsedDays,
                 s.AdjustedDays,
-                s.EntitledDays + s.AdjustedDays - s.UsedDays));
+                s.EntitledDays + s.AdjustedDays - s.UsedDays))
+            .ForMember(d => d.LeaveTypeName, o => o.Ignore())
+            .ForMember(d => d.AvailableDays, o => o.Ignore());
 
         CreateMap<AuditLog, AuditLogDto>();
     }
