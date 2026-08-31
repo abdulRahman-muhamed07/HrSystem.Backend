@@ -1,1 +1,1 @@
-// Deprecated. Application contracts are organized under DTOs/ and Abstractions/.
+// Deprecated compatibility marker. Use DTOs/ and Abstractions/ instead.
