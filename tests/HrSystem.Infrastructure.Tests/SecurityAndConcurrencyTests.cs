@@ -65,7 +65,7 @@ public sealed class SecurityAndConcurrencyTests
         var threw = false;
         try
         {
-            await db.ExecuteInTransactionAsync(async ct =>
+            await db.ExecuteInTransactionAsync<bool>(async ct =>
             {
                 db.Departments.Add(new Department("Temporary"));
                 await db.SaveChangesAsync(ct);
