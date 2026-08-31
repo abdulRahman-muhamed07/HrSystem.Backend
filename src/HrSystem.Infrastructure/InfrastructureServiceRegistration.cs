@@ -27,6 +27,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<ILeaveRepository, LeaveRepository>();
         services.AddScoped<IPayrollRepository, PayrollRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
