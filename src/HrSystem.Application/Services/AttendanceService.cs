@@ -17,23 +17,27 @@ public sealed class AttendanceService(
         if (await employees.GetByIdAsync(request.EmployeeId, ct) is null)
             throw new NotFoundException("Employee was not found.");
 
-        var now = request.CheckIn ?? TimeOnly.FromDateTime(DateTime.Now);
+        var currentDate = DateTime.UtcNow.Date;
+        var now = request.CheckIn ?? TimeOnly.FromDateTime(DateTime.UtcNow);
         var existing = (await attendance.QueryAsync(
             a => a,
-            a => a.EmployeeId == request.EmployeeId && a.Date == DateTime.UtcNow.Date,
+            a => a.EmployeeId == request.EmployeeId && a.Date == currentDate,
             0,
             1,
             ct)).FirstOrDefault();
 
         if (existing is not null)
         {
+            if (existing.CheckIn.HasValue)
+                throw new BusinessRuleException("Employee has already checked in today.");
+
             existing.CheckInAt(now, now > new TimeOnly(9, 0) ? AttendanceStatus.Late : AttendanceStatus.OnTime);
             await unitOfWork.SaveChangesAsync(ct);
             await audit.WriteAsync("CheckIn", nameof(AttendanceRecord), existing.Id.ToString(), $"Employee {request.EmployeeId} checked in.", ct);
             return mapper.Map<AttendanceDto>(existing);
         }
 
-        var record = new AttendanceRecord(request.EmployeeId, DateTime.UtcNow.Date, now);
+        var record = new AttendanceRecord(request.EmployeeId, currentDate, now);
         record.CheckInAt(now, now > new TimeOnly(9, 0) ? AttendanceStatus.Late : AttendanceStatus.OnTime);
         await attendance.AddAsync(record, ct);
         await unitOfWork.SaveChangesAsync(ct);
@@ -47,7 +51,12 @@ public sealed class AttendanceService(
         var record = await attendance.GetByIdAsync(id, ct)
             ?? throw new NotFoundException("Attendance record was not found.");
 
-        record.CheckOutAt(request.CheckOut ?? TimeOnly.FromDateTime(DateTime.Now));
+        if (!record.CheckIn.HasValue)
+            throw new BusinessRuleException("Employee must check in before checking out.");
+        if (record.CheckOut.HasValue)
+            throw new BusinessRuleException("Attendance record has already been checked out.");
+
+        record.CheckOutAt(request.CheckOut ?? TimeOnly.FromDateTime(DateTime.UtcNow));
         await unitOfWork.SaveChangesAsync(ct);
         await audit.WriteAsync("CheckOut", nameof(AttendanceRecord), id.ToString(), $"Employee {record.EmployeeId} checked out.", ct);
 
@@ -63,13 +72,13 @@ public sealed class AttendanceService(
             : null;
 
         var total = await attendance.CountAsync(predicate, ct);
-        var items = await attendance.QueryAsync(
-            a => new AttendanceDto(a.Id, a.EmployeeId, a.Date, a.CheckIn, a.CheckOut, a.Status),
+        var entities = await attendance.QueryAsync(
+            a => a,
             predicate,
             (page - 1) * pageSize,
             pageSize,
             ct);
 
-        return new(items, page, pageSize, total);
+        return new(mapper.Map<List<AttendanceDto>>(entities), page, pageSize, total);
     }
 }
