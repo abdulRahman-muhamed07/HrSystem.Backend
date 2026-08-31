@@ -1,3 +1,3 @@
-namespace HrSystem.Application;
+namespace HrSystem.Application.Models.Authentication;
 
 public sealed record LoginRequest(string Email, string Password);
