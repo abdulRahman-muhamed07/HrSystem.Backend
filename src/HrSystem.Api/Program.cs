@@ -1,8 +1,8 @@
 using System.Text;
+using HrSystem.Api.Extensions;
 using HrSystem.Api.Middleware;
 using HrSystem.Api.Security;
 using HrSystem.Application;
-using HrSystem.Application.Services;
 using HrSystem.Infrastructure.Auditing;
 using HrSystem.Infrastructure.Persistence;
 using HrSystem.Infrastructure.Security;
@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=hrsystem.db";
 var provider = builder.Configuration["Database:Provider"]?.ToLowerInvariant() ?? "sqlite";
 
@@ -21,6 +22,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     else options.UseSqlite(connectionString);
 });
 
+builder.Services.AddApplication();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
@@ -43,7 +45,6 @@ builder.Services.AddScoped<ILeaveBalanceReadService, LeaveBalanceReadService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is required.");
-if (Encoding.UTF8.GetByteCount(jwtKey) < 32) throw new InvalidOperationException("Jwt:Key must be at least 32 bytes.");
 var issuer = builder.Configuration["Jwt:Issuer"] ?? "HrSystem.Api";
 var audience = builder.Configuration["Jwt:Audience"] ?? "HrSystem.Client";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
@@ -51,16 +52,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true, ValidateAudience = true, ValidateLifetime = true, ValidateIssuerSigningKey = true,
-        ValidIssuer = issuer, ValidAudience = audience, IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), ClockSkew = TimeSpan.FromSeconds(30)
+        ValidIssuer = issuer, ValidAudience = audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ClockSkew = TimeSpan.FromSeconds(30)
     };
 });
 builder.Services.AddAuthorization();
+builder.Services.AddApiProblemDetails();
+builder.Services.AddApiRateLimiting();
 
 builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
 {
     var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? ["http://localhost:3000"];
     policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
 }));
+
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -71,20 +77,14 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseExceptionHandler();
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", async (AppDbContext db, CancellationToken ct) => Results.Ok(new { status = await db.Database.CanConnectAsync(ct) ? "Healthy" : "Unhealthy" }));
-
-if (app.Environment.IsDevelopment())
-{
-    await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
-}
 
 app.Run();
