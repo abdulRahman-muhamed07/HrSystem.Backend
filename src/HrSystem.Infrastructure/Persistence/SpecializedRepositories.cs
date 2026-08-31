@@ -16,9 +16,19 @@ public sealed class EmployeeRepository(AppDbContext db) : EfRepository<Employee>
     {
         IQueryable<Employee> query = Query().AsNoTracking().Include(e => e.Department).OrderBy(e => e.FullName);
         if (!string.IsNullOrWhiteSpace(term))
-            query = query.Where(e => e.FullName.Contains(term) || e.Email.Contains(term));
+        {
+            query = query.Where(e => e.FullName.Contains(term) || e.Email.Contains(term) || e.JobTitle.Contains(term));
+        }
 
         return await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+    }
+
+    public Task<int> CountSearchAsync(string? term, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(term))
+            return Query().CountAsync(cancellationToken);
+
+        return Query().CountAsync(e => e.FullName.Contains(term) || e.Email.Contains(term) || e.JobTitle.Contains(term), cancellationToken);
     }
 }
 
