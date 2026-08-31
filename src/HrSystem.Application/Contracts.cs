@@ -1,1 +1,1 @@
-// Intentionally empty: contracts are now separated into dedicated DTO and abstraction files.
+// Contracts have been split into dedicated DTO and abstraction files under DTOs/ and Abstractions/.
