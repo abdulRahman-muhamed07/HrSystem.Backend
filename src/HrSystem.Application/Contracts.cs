@@ -1,0 +1,1 @@
+// Intentionally empty: contracts are now separated into dedicated DTO and abstraction files.
