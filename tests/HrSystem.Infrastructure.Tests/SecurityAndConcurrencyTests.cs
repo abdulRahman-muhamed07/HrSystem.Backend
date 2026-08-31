@@ -46,7 +46,11 @@ public sealed class SecurityAndConcurrencyTests
         employee1.UpdateProfile(employee1.FullName, employee1.Email, "Senior Developer", employee1.DepartmentId, employee1.Salary, employee1.EmploymentType, employee1.EmploymentStatus, employee1.Phone, employee1.Address);
         await first.SaveChangesAsync();
         employee2.UpdateProfile(employee2.FullName, employee2.Email, "Lead Developer", employee2.DepartmentId, employee2.Salary, employee2.EmploymentType, employee2.EmploymentStatus, employee2.Phone, employee2.Address);
-        await Assert.ThrowsExceptionAsync<DbUpdateConcurrencyException>(() => second.SaveChangesAsync());
+
+        var threw = false;
+        try { await second.SaveChangesAsync(); }
+        catch (DbUpdateConcurrencyException) { threw = true; }
+        Assert.IsTrue(threw);
     }
 
     [TestMethod]
@@ -58,14 +62,19 @@ public sealed class SecurityAndConcurrencyTests
         await using var db = new AppDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
+        var threw = false;
+        try
+        {
             await db.ExecuteInTransactionAsync(async ct =>
             {
                 db.Departments.Add(new Department("Temporary"));
                 await db.SaveChangesAsync(ct);
                 throw new InvalidOperationException("rollback");
-            }));
+            });
+        }
+        catch (InvalidOperationException) { threw = true; }
 
+        Assert.IsTrue(threw);
         Assert.AreEqual(0, await db.Departments.CountAsync());
     }
 }
