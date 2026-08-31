@@ -1,5 +1,6 @@
 using AutoMapper;
 using HrSystem.Application.Mapping;
+using HrSystem.Application.Models.Common;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
