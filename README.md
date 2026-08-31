@@ -2,15 +2,9 @@
 
 Production-style HR management API built with ASP.NET Core and Clean Architecture.
 
-## Architecture
-- Domain: entities and business rules.
-- Application: use cases, contracts, validation, and application services.
-- Infrastructure: EF Core, repositories, security, auditing, and persistence.
-- API: HTTP endpoints, middleware, authentication, rate limiting, and OpenAPI.
+Architecture: Domain, Application, Infrastructure, and API layers with Dependency Inversion.
 
-## Engineering Practices
-Dependency Inversion, thin controllers, centralized error handling, JWT/RBAC, PBKDF2 password hashing, pagination/search, specialized repository contracts, EF configuration separation, health endpoint, CI, and dedicated test projects.
+Engineering practices include thin controllers, centralized errors, JWT/RBAC, PBKDF2 password hashing, pagination/search, repository abstractions, EF Core persistence separation, rate limiting support, health checks, CI, and tests.
 
-## Database
-SQLite is used for local development. SQL Server is supported through configuration.
-Never commit database files, secrets, or environment-specific credentials.
+SQLite is for local development; SQL Server is supported through configuration.
+Never commit databases, secrets, or environment-specific credentials.
