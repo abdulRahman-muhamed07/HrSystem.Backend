@@ -1,5 +1,8 @@
 using AutoMapper;
+using FluentValidation;
 using HrSystem.Application.Exceptions;
+using HrSystem.Application.Models.Employees;
+using HrSystem.Application.Validation;
 using HrSystem.Domain.Entities;
 using HrSystem.Domain.Enums;
 
@@ -10,7 +13,9 @@ public sealed class EmployeeService(
     IRepository<Department> departments,
     IUnitOfWork unitOfWork,
     IAuditService audit,
-    IMapper mapper) : IEmployeeService
+    IMapper mapper,
+    IValidator<CreateEmployeeRequest> createValidator,
+    IValidator<UpdateEmployeeRequest> updateValidator) : IEmployeeService
 {
     public async Task<PagedResult<EmployeeListItem>> GetPagedAsync(int page, int pageSize, string? search, CancellationToken ct)
     {
@@ -20,9 +25,7 @@ public sealed class EmployeeService(
 
         var total = await employees.CountSearchAsync(term, ct);
         var entities = await employees.SearchAsync(term, page, pageSize, ct);
-        var items = mapper.Map<List<EmployeeListItem>>(entities);
-
-        return new(items, page, pageSize, total);
+        return new(mapper.Map<List<EmployeeListItem>>(entities), page, pageSize, total);
     }
 
     public async Task<EmployeeDetails?> GetAsync(int id, CancellationToken ct)
@@ -33,8 +36,7 @@ public sealed class EmployeeService(
 
     public async Task<int> CreateAsync(CreateEmployeeRequest request, CancellationToken ct)
     {
-        if (request.Salary < 0)
-            throw new BusinessRuleException("Salary cannot be negative.");
+        await createValidator.ValidateAndThrowAsync(request, ct);
 
         if (await departments.GetByIdAsync(request.DepartmentId, ct) is null)
             throw new NotFoundException("Department was not found.");
@@ -44,28 +46,24 @@ public sealed class EmployeeService(
             throw new BusinessRuleException("Email is already used by another employee.");
 
         var employee = new Employee(request.FullName, email, request.JobTitle, request.DepartmentId, request.Salary, request.HireDate);
-        employee.UpdateProfile(
-            request.FullName,
-            email,
-            request.JobTitle,
-            request.DepartmentId,
-            request.Salary,
-            request.EmploymentType,
-            EmploymentStatus.Active,
-            request.Phone,
-            request.Address);
+        employee.UpdateProfile(request.FullName, email, request.JobTitle, request.DepartmentId, request.Salary,
+            request.EmploymentType, EmploymentStatus.Active, request.Phone, request.Address);
 
         await employees.AddAsync(employee, ct);
         await unitOfWork.SaveChangesAsync(ct);
         await audit.WriteAsync("Create", nameof(Employee), employee.Id.ToString(), $"Created employee {employee.FullName}", ct);
-
         return employee.Id;
     }
 
     public async Task UpdateAsync(int id, UpdateEmployeeRequest request, CancellationToken ct)
     {
+        await updateValidator.ValidateAndThrowAsync(request, ct);
+
         var employee = await employees.GetByIdAsync(id, ct)
             ?? throw new NotFoundException("Employee was not found.");
+
+        if (employee.Version != request.Version)
+            throw new ConcurrencyConflictException();
 
         if (await departments.GetByIdAsync(request.DepartmentId, ct) is null)
             throw new NotFoundException("Department was not found.");
@@ -74,16 +72,8 @@ public sealed class EmployeeService(
         if (await employees.EmailExistsAsync(email, id, ct))
             throw new BusinessRuleException("Email is already used by another employee.");
 
-        employee.UpdateProfile(
-            request.FullName,
-            email,
-            request.JobTitle,
-            request.DepartmentId,
-            request.Salary,
-            request.EmploymentType,
-            request.EmploymentStatus,
-            request.Phone,
-            request.Address);
+        employee.UpdateProfile(request.FullName, email, request.JobTitle, request.DepartmentId, request.Salary,
+            request.EmploymentType, request.EmploymentStatus, request.Phone, request.Address);
         employee.UpdateAllowances(request.HousingAllowance, request.TransportationAllowance, request.MealAllowance);
 
         await unitOfWork.SaveChangesAsync(ct);
@@ -95,16 +85,8 @@ public sealed class EmployeeService(
         var employee = await employees.GetByIdAsync(id, ct)
             ?? throw new NotFoundException("Employee was not found.");
 
-        employee.UpdateProfile(
-            employee.FullName,
-            employee.Email,
-            employee.JobTitle,
-            employee.DepartmentId,
-            employee.Salary,
-            employee.EmploymentType,
-            EmploymentStatus.Terminated,
-            employee.Phone,
-            employee.Address);
+        employee.UpdateProfile(employee.FullName, employee.Email, employee.JobTitle, employee.DepartmentId, employee.Salary,
+            employee.EmploymentType, EmploymentStatus.Terminated, employee.Phone, employee.Address);
 
         await unitOfWork.SaveChangesAsync(ct);
         await audit.WriteAsync("Deactivate", nameof(Employee), id.ToString(), $"Employee {employee.FullName} was marked as terminated.", ct);
