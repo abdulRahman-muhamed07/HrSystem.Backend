@@ -10,6 +10,7 @@ public sealed class AuthService(
     ITokenService tokenService,
     ITokenRevocationService tokenRevocation,
     IAuditService audit,
+    ICurrentUser currentUser,
     IUnitOfWork unitOfWork) : IAuthService
 {
     public async Task<LoginResponse?> LoginAsync(LoginRequest request, CancellationToken ct)
@@ -69,6 +70,6 @@ public sealed class AuthService(
             throw new BusinessRuleException("Token identifier is required.");
 
         await tokenRevocation.RevokeAsync(jti, expiresAt, ct);
-        await audit.WriteAsync("Logout", nameof(User), "current", null, ct);
+        await audit.WriteAsync("Logout", nameof(User), currentUser.UserId?.ToString() ?? "unknown", null, ct);
     }
 }
