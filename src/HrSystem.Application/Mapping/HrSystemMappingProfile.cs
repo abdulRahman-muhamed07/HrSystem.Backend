@@ -16,36 +16,48 @@ public sealed class HrSystemMappingProfile : Profile
 {
     public HrSystemMappingProfile()
     {
-        CreateMap<Employee, EmployeeListItem>()
-            .ForCtorParam("DepartmentName", o => o.MapFrom(s => s.Department != null ? s.Department.Name : string.Empty));
+        CreateMap<Employee, EmployeeListItem>().ConstructUsing(s =>
+            new EmployeeListItem(s.Id, s.FullName, s.Email, s.JobTitle,
+                s.Department?.Name ?? string.Empty, s.EmploymentStatus, s.Salary));
 
-        CreateMap<Employee, EmployeeDetails>()
-            .ForCtorParam("DepartmentName", o => o.MapFrom(s => s.Department != null ? s.Department.Name : string.Empty));
+        CreateMap<Employee, EmployeeDetails>().ConstructUsing(s =>
+            new EmployeeDetails(s.Id, s.Version, s.FullName, s.Email, s.NationalId, s.Phone,
+                s.JobTitle, s.DepartmentId, s.Department?.Name ?? string.Empty, s.EmploymentType,
+                s.EmploymentStatus, s.Salary, s.HousingAllowance, s.TransportationAllowance,
+                s.MealAllowance, s.HireDate));
 
-        CreateMap<Department, DepartmentDto>()
-            .ForCtorParam("EmployeeCount", o => o.MapFrom(s => s.Employees.Count));
+        CreateMap<Department, DepartmentDto>().ConstructUsing(s =>
+            new DepartmentDto(s.Id, s.Name, s.Description, s.Employees.Count));
 
         CreateMap<AttendanceRecord, AttendanceDto>();
 
-        CreateMap<LeaveRequest, LeaveRequestDto>()
-            .ForCtorParam("EmployeeName", o => o.MapFrom(s => s.Employee != null ? s.Employee.FullName : string.Empty))
-            .ForCtorParam("LeaveTypeName", o => o.MapFrom(s => s.LeaveType != null ? s.LeaveType.Name : string.Empty));
+        CreateMap<LeaveRequest, LeaveRequestDto>().ConstructUsing(s =>
+            new LeaveRequestDto(s.Id, s.Version, s.EmployeeId, s.Employee?.FullName ?? string.Empty,
+                s.LeaveTypeId, s.LeaveType?.Name ?? string.Empty, s.StartDate, s.EndDate,
+                s.DurationDays, s.Reason, s.Status, s.RejectionReason));
 
-        CreateMap<EmployeeLoan, LoanDto>()
-            .ForCtorParam("EmployeeName", o => o.MapFrom(s => s.Employee != null ? s.Employee.FullName : string.Empty));
+        CreateMap<EmployeeLoan, LoanDto>().ConstructUsing(s =>
+            new LoanDto(s.Id, s.EmployeeId, s.Employee?.FullName ?? string.Empty, s.Amount,
+                s.Installments, s.MonthlyDeduction, s.RemainingAmount, s.Reason, s.Status));
 
-        CreateMap<OvertimeRequest, OvertimeDto>()
-            .ForCtorParam("EmployeeName", o => o.MapFrom(s => s.Employee != null ? s.Employee.FullName : string.Empty));
+        CreateMap<OvertimeRequest, OvertimeDto>().ConstructUsing(s =>
+            new OvertimeDto(s.Id, s.EmployeeId, s.Employee?.FullName ?? string.Empty,
+                s.Hours, s.RateMultiplier, s.Reason, s.Status));
 
-        CreateMap<PayrollRecord, PayrollDto>()
-            .ForCtorParam("EmployeeName", o => o.MapFrom(s => s.Employee != null ? s.Employee.FullName : string.Empty));
+        CreateMap<PayrollRecord, PayrollDto>().ConstructUsing(s =>
+            new PayrollDto(s.Id, s.EmployeeId, s.Employee?.FullName ?? string.Empty,
+                s.Year, s.Month, s.BasicSalary, s.HousingAllowance, s.TransportationAllowance,
+                s.MealAllowance, s.OtherAllowances, s.OvertimePay, s.GrossSalary,
+                s.GosiEmployee, s.GosiEmployer, s.IncomeTax, s.LoanDeduction,
+                s.OtherDeductions, s.NetSalary, s.Status));
 
         CreateMap<User, UserDto>();
         CreateMap<LeaveType, LeaveTypeDto>();
 
-        CreateMap<EmployeeLeaveBalance, LeaveBalanceDto>()
-            .ForCtorParam("LeaveTypeName", o => o.MapFrom(s => s.LeaveType != null ? s.LeaveType.Name : string.Empty))
-            .ForCtorParam("AvailableDays", o => o.MapFrom(s => s.EntitledDays + s.AdjustedDays - s.UsedDays));
+        CreateMap<EmployeeLeaveBalance, LeaveBalanceDto>().ConstructUsing(s =>
+            new LeaveBalanceDto(s.Id, s.EmployeeId, s.LeaveTypeId, s.LeaveType?.Name ?? string.Empty,
+                s.Year, s.EntitledDays, s.UsedDays, s.AdjustedDays,
+                s.EntitledDays + s.AdjustedDays - s.UsedDays));
 
         CreateMap<AuditLog, AuditLogDto>();
     }
