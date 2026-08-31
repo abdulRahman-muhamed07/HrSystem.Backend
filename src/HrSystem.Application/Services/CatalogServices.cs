@@ -72,9 +72,6 @@ public sealed class LeaveTypeService(
     }
 }
 
-public sealed record LeaveBalanceDto(int Id, int EmployeeId, int LeaveTypeId, string LeaveTypeName, int Year, decimal EntitledDays, decimal UsedDays, decimal AdjustedDays, decimal AvailableDays);
-public sealed record AuditLogDto(int Id, int? UserId, string? UserName, string Action, string EntityName, string? EntityId, string? Details, DateTime Timestamp);
-
 public sealed class LeaveBalanceReadService(IRepository<EmployeeLeaveBalance> balances) : ILeaveBalanceReadService
 {
     public async Task<IReadOnlyCollection<LeaveBalanceDto>> GetAsync(int employeeId, int year, CancellationToken ct)
