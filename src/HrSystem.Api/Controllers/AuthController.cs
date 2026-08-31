@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using HrSystem.Application;
+using HrSystem.Application.Models.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -29,9 +30,18 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
         return result is null ? Unauthorized(new { message = "Invalid credentials." }) : Ok(result);
     }
 
+    [AllowAnonymous]
+    [EnableRateLimiting("login")]
+    [HttpPost("refresh")]
+    public async Task<ActionResult<LoginResponse>> Refresh(RefreshTokenRequest request, CancellationToken ct)
+    {
+        var result = await authService.RefreshAsync(request, ct);
+        return result is null ? Unauthorized(new { message = "Invalid or expired refresh token." }) : Ok(result);
+    }
+
     [Authorize]
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout(CancellationToken ct)
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest? request, CancellationToken ct)
     {
         var jti = User.FindFirstValue(JwtRegisteredClaimNames.Jti);
         var exp = User.FindFirstValue(JwtRegisteredClaimNames.Exp);
@@ -42,6 +52,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
         await authService.LogoutAsync(
             jti,
             DateTimeOffset.FromUnixTimeSeconds(expUnix),
+            request?.RefreshToken,
             ct);
 
         return NoContent();
