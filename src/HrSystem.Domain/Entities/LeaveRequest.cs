@@ -2,9 +2,10 @@ using HrSystem.Domain.Enums;
 
 namespace HrSystem.Domain.Entities;
 
-public sealed class LeaveRequest
+public sealed class LeaveRequest : IConcurrencyTracked
 {
     public int Id { get; private set; }
+    public Guid Version { get; private set; } = Guid.NewGuid();
     public int EmployeeId { get; private set; }
     public int LeaveTypeId { get; private set; }
     public DateTime StartDate { get; private set; }
