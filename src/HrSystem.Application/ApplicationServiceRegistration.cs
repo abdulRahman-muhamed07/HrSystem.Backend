@@ -1,4 +1,6 @@
+using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
+using HrSystem.Application.Mapping;
 using HrSystem.Application.Services;
 
 namespace HrSystem.Application;
@@ -7,6 +9,8 @@ public static class ApplicationServiceRegistration
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddAutoMapper(typeof(HrSystemMappingProfile).Assembly);
+
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IEmployeeService, EmployeeService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
