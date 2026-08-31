@@ -1,3 +1,3 @@
-namespace HrSystem.Application;
+namespace HrSystem.Application.Models.Leaves;
 
 public sealed record LeaveBalanceDto(int Id, int EmployeeId, int LeaveTypeId, string LeaveTypeName, int Year, decimal EntitledDays, decimal UsedDays, decimal AdjustedDays, decimal AvailableDays);
