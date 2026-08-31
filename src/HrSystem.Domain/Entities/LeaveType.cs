@@ -15,6 +15,16 @@ public sealed class LeaveType
     private LeaveType() { }
     public LeaveType(string name, decimal daysPerYear, bool isPaid, string? nameAr = null, string? description = null)
     { Name = name.Trim(); DaysPerYear = daysPerYear; IsPaid = isPaid; NameAr = nameAr?.Trim(); Description = description?.Trim(); }
+
+    public void Update(string name, decimal daysPerYear, bool isPaid, string? nameAr, string? description)
+    {
+        Name = name.Trim();
+        DaysPerYear = daysPerYear;
+        IsPaid = isPaid;
+        NameAr = nameAr?.Trim();
+        Description = description?.Trim();
+    }
+
     public void Deactivate() => IsActive = false;
     public void Activate() => IsActive = true;
 }
