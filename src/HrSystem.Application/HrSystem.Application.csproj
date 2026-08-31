@@ -8,6 +8,7 @@
     <ProjectReference Include="../HrSystem.Domain/HrSystem.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="16.2.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
   </ItemGroup>
 </Project>
