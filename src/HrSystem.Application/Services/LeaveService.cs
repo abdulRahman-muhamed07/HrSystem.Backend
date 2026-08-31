@@ -21,7 +21,7 @@ public sealed class LeaveService(
 {
     public async Task<int> CreateAsync(CreateLeaveRequest request, CancellationToken ct)
     {
-        await createValidator.ValidateAndThrowAsync(request, ct);
+        await createValidator.ValidateApplicationRequestAsync(request, ct);
 
         if (await employees.GetByIdAsync(request.EmployeeId, ct) is null)
             throw new NotFoundException("Employee was not found.");
