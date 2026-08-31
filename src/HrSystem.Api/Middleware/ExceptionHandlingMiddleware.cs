@@ -1,3 +1,4 @@
+using FluentValidation;
 using HrSystem.Application.Exceptions;
 
 namespace HrSystem.Api.Middleware;
@@ -6,20 +7,27 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
 {
     public async Task Invoke(HttpContext context)
     {
-        try { await next(context); }
+        try
+        {
+            await next(context);
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unhandled request failure. TraceId={TraceId} Path={Path}", context.TraceIdentifier, context.Request.Path);
             if (context.Response.HasStarted) throw;
-            context.Response.Clear(); context.Response.ContentType = "application/problem+json";
-            var (status, title) = ex switch
+
+            context.Response.Clear();
+            context.Response.ContentType = "application/problem+json";
+            var (status, title, detail) = ex switch
             {
-                NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
-                BusinessRuleException => (StatusCodes.Status400BadRequest, "Business rule violated"),
-                _ => (StatusCodes.Status500InternalServerError, "Unexpected server error")
+                ValidationException validation => (400, "Validation failed", string.Join("; ", validation.Errors.Select(x => $"{x.PropertyName}: {x.ErrorMessage}"))),
+                NotFoundException => (404, "Resource not found", ex.Message),
+                ConcurrencyConflictException => (409, "Concurrency conflict", ex.Message),
+                BusinessRuleException => (400, "Business rule violated", ex.Message),
+                _ => (500, "Unexpected server error", "An unexpected server error occurred.")
             };
             context.Response.StatusCode = status;
-            await context.Response.WriteAsJsonAsync(new { type = "about:blank", title, status, detail = status == 500 ? "An unexpected error occurred." : ex.Message, traceId = context.TraceIdentifier });
+            await context.Response.WriteAsJsonAsync(new { type = "about:blank", title, status, detail, traceId = context.TraceIdentifier });
         }
     }
 }
