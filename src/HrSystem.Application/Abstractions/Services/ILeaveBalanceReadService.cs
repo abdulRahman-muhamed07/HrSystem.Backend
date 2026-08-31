@@ -1,3 +1,5 @@
+using HrSystem.Application.Models.Leaves;
+
 namespace HrSystem.Application;
 
 public interface ILeaveBalanceReadService
