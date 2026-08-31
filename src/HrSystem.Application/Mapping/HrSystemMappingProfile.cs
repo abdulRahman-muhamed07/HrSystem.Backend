@@ -1,15 +1,5 @@
 using AutoMapper;
-using HrSystem.Application.Models.Attendance;
-using HrSystem.Application.Models.Auditing;
-using HrSystem.Application.Models.Departments;
-using HrSystem.Application.Models.Employees;
-using HrSystem.Application.Models.Leaves;
-using HrSystem.Application.Models.Loans;
-using HrSystem.Application.Models.Overtime;
-using HrSystem.Application.Models.Payroll;
-using HrSystem.Application.Models.Users;
-using HrSystem.Application.Models.Dashboard;
-using HrSystem.Application.Models.Authentication;
+using HrSystem.Application;
 using HrSystem.Domain.Entities;
 
 namespace HrSystem.Application.Mapping;
