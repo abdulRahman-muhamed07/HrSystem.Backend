@@ -1,34 +1,16 @@
 using System.Text;
 using HrSystem.Api.Extensions;
-using HrSystem.Api.Security;
 using HrSystem.Application;
-using HrSystem.Infrastructure.Auditing;
+using HrSystem.Infrastructure;
 using HrSystem.Infrastructure.Persistence;
-using HrSystem.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=hrsystem.db";
-var provider = builder.Configuration["Database:Provider"]?.ToLowerInvariant() ?? "sqlite";
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    if (provider == "sqlserver") options.UseSqlServer(connectionString);
-    else options.UseSqlite(connectionString);
-});
-
 builder.Services.AddApplication();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUser, CurrentUser>();
-builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
-builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-builder.Services.AddScoped<ITokenService, JwtTokenService>();
-builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is required.");
 var issuer = builder.Configuration["Jwt:Issuer"] ?? "HrSystem.Api";
@@ -37,8 +19,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true, ValidateAudience = true, ValidateLifetime = true, ValidateIssuerSigningKey = true,
-        ValidIssuer = issuer, ValidAudience = audience,
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = issuer,
+        ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.FromSeconds(30)
     };
@@ -53,24 +39,52 @@ builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
     policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
 }));
 
-builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+builder.Services.AddControllers().AddJsonOptions(options =>
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "HR System API", Version = "v1", Description = "Human Resources Management API built with Clean Architecture." });
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme { Name = "Authorization", Type = SecuritySchemeType.Http, Scheme = "bearer", BearerFormat = "JWT", In = ParameterLocation.Header });
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement { { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, Array.Empty<string>() } });
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "HR System API",
+        Version = "v1",
+        Description = "Human Resources Management API built with Clean Architecture."
+    });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 var app = builder.Build();
 app.UseExceptionHandler();
-if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.UseHttpsRedirection();
 app.UseRateLimiter();
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapGet("/health", async (AppDbContext db, CancellationToken ct) => Results.Ok(new { status = await db.Database.CanConnectAsync(ct) ? "Healthy" : "Unhealthy" }));
+app.MapGet("/health", async (AppDbContext db, CancellationToken ct) =>
+    Results.Ok(new { status = await db.Database.CanConnectAsync(ct) ? "Healthy" : "Unhealthy" }));
 
 app.Run();
