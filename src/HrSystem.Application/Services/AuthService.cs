@@ -22,7 +22,7 @@ public sealed class AuthService(
 {
     public async Task<LoginResponse?> LoginAsync(LoginRequest request, CancellationToken ct)
     {
-        await loginValidator.ValidateAndThrowAsync(request, ct);
+        await loginValidator.ValidateApplicationRequestAsync(request, ct);
         var normalized = request.Email.Trim().ToLowerInvariant();
         var user = (await users.QueryAsync(u => u, u => u.Email == normalized && u.IsActive, 0, 1, ct)).FirstOrDefault();
         if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash)) return null;
@@ -40,7 +40,7 @@ public sealed class AuthService(
 
     public async Task<LoginResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
-        await registerValidator.ValidateAndThrowAsync(request, ct);
+        await registerValidator.ValidateApplicationRequestAsync(request, ct);
         var fullName = request.FullName.Trim();
         var email = request.Email.Trim().ToLowerInvariant();
         if (await users.CountAsync(u => u.Email == email, ct) > 0)
