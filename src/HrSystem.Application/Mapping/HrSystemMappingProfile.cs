@@ -17,35 +17,116 @@ public sealed class HrSystemMappingProfile : Profile
     public HrSystemMappingProfile()
     {
         CreateMap<Employee, EmployeeListItem>()
-            .ForCtorParam("DepartmentName", o => o.MapFrom(s => s.Department != null ? s.Department.Name : string.Empty));
+            .ConstructUsing(s => new EmployeeListItem(
+                s.Id,
+                s.FullName,
+                s.Email,
+                s.JobTitle,
+                s.Department == null ? string.Empty : s.Department.Name,
+                s.EmploymentStatus,
+                s.Salary))
+            .ForMember(d => d.Status, o => o.Ignore());
 
         CreateMap<Employee, EmployeeDetails>()
-            .ForCtorParam("DepartmentName", o => o.MapFrom(s => s.Department != null ? s.Department.Name : string.Empty));
+            .ConstructUsing(s => new EmployeeDetails(
+                s.Id,
+                s.Version,
+                s.FullName,
+                s.Email,
+                s.NationalId,
+                s.Phone,
+                s.JobTitle,
+                s.DepartmentId,
+                s.Department == null ? string.Empty : s.Department.Name,
+                s.EmploymentType,
+                s.EmploymentStatus,
+                s.Salary,
+                s.HousingAllowance,
+                s.TransportationAllowance,
+                s.MealAllowance,
+                s.HireDate));
 
         CreateMap<Department, DepartmentDto>()
-            .ForCtorParam("EmployeeCount", o => o.MapFrom(s => s.Employees.Count));
+            .ConstructUsing(s => new DepartmentDto(
+                s.Id,
+                s.Name,
+                s.Description,
+                s.Employees.Count))
+            .ForMember(d => d.EmployeeCount, o => o.Ignore());
 
         CreateMap<AttendanceRecord, AttendanceDto>();
 
         CreateMap<LeaveRequest, LeaveRequestDto>()
-            .ForCtorParam("EmployeeName", o => o.MapFrom(s => s.Employee != null ? s.Employee.FullName : string.Empty))
-            .ForCtorParam("LeaveTypeName", o => o.MapFrom(s => s.LeaveType != null ? s.LeaveType.Name : string.Empty));
+            .ConstructUsing(s => new LeaveRequestDto(
+                s.Id,
+                s.EmployeeId,
+                s.Employee == null ? string.Empty : s.Employee.FullName,
+                s.LeaveTypeId,
+                s.LeaveType == null ? string.Empty : s.LeaveType.Name,
+                s.StartDate,
+                s.EndDate,
+                s.DurationDays,
+                s.Reason,
+                s.Status,
+                s.RejectionReason))
+            .ForMember(d => d.EmployeeName, o => o.Ignore());
 
         CreateMap<EmployeeLoan, LoanDto>()
-            .ForCtorParam("EmployeeName", o => o.MapFrom(s => s.Employee != null ? s.Employee.FullName : string.Empty));
+            .ConstructUsing(s => new LoanDto(
+                s.Id,
+                s.EmployeeId,
+                s.Employee == null ? string.Empty : s.Employee.FullName,
+                s.Amount,
+                s.Installments,
+                s.MonthlyDeduction,
+                s.RemainingAmount,
+                s.Reason,
+                s.Status))
+            .ForMember(d => d.EmployeeName, o => o.Ignore());
 
         CreateMap<OvertimeRequest, OvertimeDto>()
-            .ForCtorParam("EmployeeName", o => o.MapFrom(s => s.Employee != null ? s.Employee.FullName : string.Empty));
+            .ConstructUsing(s => new OvertimeDto(
+                s.Id,
+                s.EmployeeId,
+                s.Employee == null ? string.Empty : s.Employee.FullName,
+                s.Date,
+                s.Hours,
+                s.RateMultiplier,
+                s.Reason,
+                s.Status))
+            .ForMember(d => d.EmployeeName, o => o.Ignore());
 
         CreateMap<PayrollRecord, PayrollDto>()
-            .ForCtorParam("EmployeeName", o => o.MapFrom(s => s.Employee != null ? s.Employee.FullName : string.Empty));
+            .ConstructUsing(s => new PayrollDto(
+                s.Id,
+                s.EmployeeId,
+                s.Employee == null ? string.Empty : s.Employee.FullName,
+                s.Year,
+                s.Month,
+                s.GrossSalary,
+                s.NetSalary,
+                s.OvertimePay,
+                s.LoanDeduction,
+                s.Status,
+                s.PaidAt))
+            .ForMember(d => d.EmployeeName, o => o.Ignore());
 
         CreateMap<User, UserDto>();
         CreateMap<LeaveType, LeaveTypeDto>();
 
         CreateMap<EmployeeLeaveBalance, LeaveBalanceDto>()
-            .ForCtorParam("LeaveTypeName", o => o.MapFrom(s => s.LeaveType != null ? s.LeaveType.Name : string.Empty))
-            .ForCtorParam("AvailableDays", o => o.MapFrom(s => s.EntitledDays + s.AdjustedDays - s.UsedDays));
+            .ConstructUsing(s => new LeaveBalanceDto(
+                s.Id,
+                s.EmployeeId,
+                s.LeaveTypeId,
+                s.LeaveType == null ? string.Empty : s.LeaveType.Name,
+                s.Year,
+                s.EntitledDays,
+                s.UsedDays,
+                s.AdjustedDays,
+                s.EntitledDays + s.AdjustedDays - s.UsedDays))
+            .ForMember(d => d.LeaveTypeName, o => o.Ignore())
+            .ForMember(d => d.AvailableDays, o => o.Ignore());
 
         CreateMap<AuditLog, AuditLogDto>();
     }

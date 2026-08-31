@@ -1,7 +1,6 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
 using HrSystem.Api.Extensions;
+using HrSystem.Api.Middleware;
 using HrSystem.Api.Security;
 using HrSystem.Application;
 using HrSystem.Infrastructure;
@@ -32,23 +31,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.FromSeconds(30)
-    };
-
-    options.Events = new JwtBearerEvents
-    {
-        OnTokenValidated = async context =>
-        {
-            var jti = context.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
-            if (string.IsNullOrWhiteSpace(jti))
-            {
-                context.Fail("Token identifier is missing.");
-                return;
-            }
-
-            var revocation = context.HttpContext.RequestServices.GetRequiredService<ITokenRevocationService>();
-            if (await revocation.IsRevokedAsync(jti, context.HttpContext.RequestAborted))
-                context.Fail("Token has been revoked.");
-        }
     };
 });
 builder.Services.AddAuthorization();
@@ -87,7 +69,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
-app.UseExceptionHandler();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

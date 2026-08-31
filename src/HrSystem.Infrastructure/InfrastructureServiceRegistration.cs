@@ -20,10 +20,8 @@ public static class InfrastructureServiceRegistration
         services.AddMemoryCache();
         services.AddDbContext<AppDbContext>(options =>
         {
-            if (provider == "sqlserver")
-                options.UseSqlServer(connectionString);
-            else
-                options.UseSqlite(connectionString);
+            if (provider == "sqlserver") options.UseSqlServer(connectionString);
+            else options.UseSqlite(connectionString);
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
@@ -34,6 +32,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IPayrollRepository, PayrollRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddSingleton<ITokenRevocationService, InMemoryTokenRevocationService>();
         services.AddScoped<IAuditService, AuditService>();
 
