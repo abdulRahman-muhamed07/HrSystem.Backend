@@ -1,5 +1,6 @@
 using System.Text;
 using HrSystem.Api.Extensions;
+using HrSystem.Api.Security;
 using HrSystem.Application;
 using HrSystem.Infrastructure;
 using HrSystem.Infrastructure.Persistence;
@@ -11,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is required.");
 var issuer = builder.Configuration["Jwt:Issuer"] ?? "HrSystem.Api";
