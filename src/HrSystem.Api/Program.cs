@@ -1,6 +1,5 @@
 using System.Text;
 using HrSystem.Api.Extensions;
-using HrSystem.Api.Middleware;
 using HrSystem.Api.Security;
 using HrSystem.Application;
 using HrSystem.Infrastructure.Auditing;
@@ -30,19 +29,6 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<IDepartmentService, DepartmentService>();
-builder.Services.AddScoped<IAttendanceService, AttendanceService>();
-builder.Services.AddScoped<ILeaveService, LeaveService>();
-builder.Services.AddScoped<IOvertimeService, OvertimeService>();
-builder.Services.AddScoped<ILoanService, LoanService>();
-builder.Services.AddScoped<IPayrollService, PayrollService>();
-builder.Services.AddScoped<IDashboardService, DashboardService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<ILeaveTypeService, LeaveTypeService>();
-builder.Services.AddScoped<ILeaveBalanceReadService, LeaveBalanceReadService>();
-builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is required.");
 var issuer = builder.Configuration["Jwt:Issuer"] ?? "HrSystem.Api";
