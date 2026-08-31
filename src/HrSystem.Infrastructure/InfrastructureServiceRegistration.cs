@@ -4,6 +4,7 @@ using HrSystem.Infrastructure.Persistence;
 using HrSystem.Infrastructure.Persistence.Repositories;
 using HrSystem.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,7 @@ public static class InfrastructureServiceRegistration
         var connectionString = configuration.GetConnectionString("DefaultConnection") ?? "Data Source=hrsystem.db";
         var provider = configuration["Database:Provider"]?.ToLowerInvariant() ?? "sqlite";
 
+        services.AddMemoryCache();
         services.AddDbContext<AppDbContext>(options =>
         {
             if (provider == "sqlserver")
@@ -32,6 +34,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IPayrollRepository, PayrollRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddSingleton<ITokenRevocationService, InMemoryTokenRevocationService>();
         services.AddScoped<IAuditService, AuditService>();
 
         return services;
