@@ -1,6 +1,7 @@
 using HrSystem.Application;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace HrSystem.Api.Controllers;
 
@@ -9,6 +10,7 @@ namespace HrSystem.Api.Controllers;
 public sealed class AuthController(IAuthService authService) : ControllerBase
 {
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request, CancellationToken ct)
     {
