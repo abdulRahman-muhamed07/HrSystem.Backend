@@ -1,0 +1,8 @@
+using HrSystem.Domain.Entities;
+
+namespace HrSystem.Application;
+
+public interface IEmployeeRepository : IRepository<Employee>
+{
+    Task<bool> EmailExistsAsync(string email, int? excludingId = null, CancellationToken cancellationToken = default);
+}
