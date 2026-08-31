@@ -1,1 +1,1 @@
-// Contracts have been split into dedicated DTO and abstraction files under DTOs/ and Abstractions/.
+// Deprecated. Application contracts are organized under DTOs/ and Abstractions/.
