@@ -1,5 +1,8 @@
 using AutoMapper;
+using FluentValidation;
 using HrSystem.Application.Exceptions;
+using HrSystem.Application.Models.Leaves;
+using HrSystem.Application.Validation;
 using HrSystem.Domain.Entities;
 using HrSystem.Domain.Enums;
 
@@ -13,12 +16,12 @@ public sealed class LeaveService(
     IUnitOfWork unitOfWork,
     IAuditService audit,
     ICurrentUser currentUser,
-    IMapper mapper) : ILeaveService
+    IMapper mapper,
+    IValidator<CreateLeaveRequest> createValidator) : ILeaveService
 {
     public async Task<int> CreateAsync(CreateLeaveRequest request, CancellationToken ct)
     {
-        if (request.EndDate.Date < request.StartDate.Date)
-            throw new BusinessRuleException("End date cannot be before start date.");
+        await createValidator.ValidateAndThrowAsync(request, ct);
 
         if (await employees.GetByIdAsync(request.EmployeeId, ct) is null)
             throw new NotFoundException("Employee was not found.");
@@ -36,95 +39,87 @@ public sealed class LeaveService(
         if (duration <= 0)
             throw new BusinessRuleException("Leave request must contain at least one working day.");
 
-        var year = request.StartDate.Year;
-        var balance = (await balances.QueryAsync(
-            b => b,
-            b => b.EmployeeId == request.EmployeeId && b.LeaveTypeId == request.LeaveTypeId && b.Year == year,
-            0,
-            1,
-            ct)).FirstOrDefault();
-
-        if (balance is null)
+        return await unitOfWork.ExecuteInTransactionAsync(async token =>
         {
-            balance = new EmployeeLeaveBalance(request.EmployeeId, request.LeaveTypeId, year, type.DaysPerYear);
-            await balances.AddAsync(balance, ct);
-        }
+            var year = request.StartDate.Year;
+            var balance = (await balances.QueryAsync(
+                b => b,
+                b => b.EmployeeId == request.EmployeeId && b.LeaveTypeId == request.LeaveTypeId && b.Year == year,
+                0, 1, token)).FirstOrDefault();
 
-        if (balance.AvailableDays < duration)
-            throw new BusinessRuleException("Insufficient leave balance.");
+            if (balance is null)
+            {
+                balance = new EmployeeLeaveBalance(request.EmployeeId, request.LeaveTypeId, year, type.DaysPerYear);
+                await balances.AddAsync(balance, token);
+            }
 
-        var leave = new LeaveRequest(request.EmployeeId, request.LeaveTypeId, request.StartDate, request.EndDate, duration, request.Reason);
-        await leaves.AddAsync(leave, ct);
-        await unitOfWork.SaveChangesAsync(ct);
-        await audit.WriteAsync("Create", nameof(LeaveRequest), leave.Id.ToString(), $"Created leave request for employee {request.EmployeeId}.", ct);
+            if (balance.AvailableDays < duration)
+                throw new BusinessRuleException("Insufficient leave balance.");
 
-        return leave.Id;
+            var leave = new LeaveRequest(request.EmployeeId, request.LeaveTypeId,
+                request.StartDate, request.EndDate, duration, request.Reason);
+            await leaves.AddAsync(leave, token);
+            await unitOfWork.SaveChangesAsync(token);
+            await audit.WriteAsync("Create", nameof(LeaveRequest), leave.Id.ToString(),
+                $"Created leave request for employee {request.EmployeeId}.", token);
+
+            return leave.Id;
+        }, ct);
     }
 
     public async Task<PagedResult<LeaveRequestDto>> GetPagedAsync(int page, int pageSize, LeaveRequestStatus? status, CancellationToken ct)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
-
         var predicate = status.HasValue
             ? (System.Linq.Expressions.Expression<Func<LeaveRequest, bool>>)(l => l.Status == status.Value)
             : null;
-
         var total = await leaves.CountAsync(predicate, ct);
-        var entities = await leaves.QueryAsync(
-            l => l,
-            predicate,
-            (page - 1) * pageSize,
-            pageSize,
-            ct);
-
+        var entities = await leaves.QueryAsync(l => l, predicate, (page - 1) * pageSize, pageSize, ct);
         return new(mapper.Map<List<LeaveRequestDto>>(entities), page, pageSize, total);
     }
 
     public async Task DecideAsync(int id, LeaveDecisionRequest request, CancellationToken ct)
     {
-        var leave = await leaves.GetByIdAsync(id, ct)
-            ?? throw new NotFoundException("Leave request was not found.");
+        var userId = currentUser.UserId ?? throw new BusinessRuleException("Authenticated user is required.");
 
-        if (leave.Status != LeaveRequestStatus.Pending)
-            throw new BusinessRuleException("Only pending leave requests can be decided.");
-
-        var userId = currentUser.UserId
-            ?? throw new BusinessRuleException("Authenticated user is required.");
-
-        var balance = (await balances.QueryAsync(
-            b => b,
-            b => b.EmployeeId == leave.EmployeeId && b.LeaveTypeId == leave.LeaveTypeId && b.Year == leave.StartDate.Year,
-            0,
-            1,
-            ct)).FirstOrDefault();
-
-        if (request.Approve)
+        await unitOfWork.ExecuteInTransactionAsync(async token =>
         {
-            if (balance is null || balance.AvailableDays < leave.DurationDays)
-                throw new BusinessRuleException("Insufficient leave balance.");
+            var leave = await leaves.GetByIdAsync(id, token)
+                ?? throw new NotFoundException("Leave request was not found.");
 
-            leave.Approve(userId);
-            balance.AddUsage(leave.DurationDays);
-        }
-        else
-        {
-            leave.Reject(userId, string.IsNullOrWhiteSpace(request.RejectionReason) ? "Rejected by HR." : request.RejectionReason);
-        }
+            if (leave.Status != LeaveRequestStatus.Pending)
+                throw new BusinessRuleException("Only pending leave requests can be decided.");
 
-        await unitOfWork.SaveChangesAsync(ct);
-        await audit.WriteAsync(request.Approve ? "Approve" : "Reject", nameof(LeaveRequest), id.ToString(), null, ct);
+            var balance = (await balances.QueryAsync(
+                b => b,
+                b => b.EmployeeId == leave.EmployeeId && b.LeaveTypeId == leave.LeaveTypeId && b.Year == leave.StartDate.Year,
+                0, 1, token)).FirstOrDefault();
+
+            if (request.Approve)
+            {
+                if (balance is null || balance.AvailableDays < leave.DurationDays)
+                    throw new BusinessRuleException("Insufficient leave balance.");
+                leave.Approve(userId);
+                balance.AddUsage(leave.DurationDays);
+            }
+            else
+            {
+                leave.Reject(userId, string.IsNullOrWhiteSpace(request.RejectionReason) ? "Rejected by HR." : request.RejectionReason);
+            }
+
+            await unitOfWork.SaveChangesAsync(token);
+            await audit.WriteAsync(request.Approve ? "Approve" : "Reject", nameof(LeaveRequest), id.ToString(), null, token);
+            return true;
+        }, ct);
     }
 
     private static decimal WorkingDays(DateTime start, DateTime end)
     {
         var days = 0;
         for (var date = start.Date; date <= end.Date; date = date.AddDays(1))
-        {
             if (date.DayOfWeek is not DayOfWeek.Friday and not DayOfWeek.Saturday)
                 days++;
-        }
-
         return days;
     }
 }
