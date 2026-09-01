@@ -28,17 +28,13 @@ public static class JwtAuthenticationExtensions
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                var jwt = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
                 options.RequireHttpsMetadata = !isDevelopment;
                 options.SaveToken = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
                     ValidateIssuer = true,
-                    ValidIssuer = jwt.Issuer,
                     ValidateAudience = true,
-                    ValidAudience = jwt.Audience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromSeconds(30)
                 };
@@ -47,6 +43,12 @@ public static class JwtAuthenticationExtensions
                 {
                     OnTokenValidated = async context =>
                     {
+                        var jwt = context.HttpContext.RequestServices.GetRequiredService<IOptions<JwtOptions>>().Value;
+                        context.Options.TokenValidationParameters.IssuerSigningKey =
+                            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));
+                        context.Options.TokenValidationParameters.ValidIssuer = jwt.Issuer;
+                        context.Options.TokenValidationParameters.ValidAudience = jwt.Audience;
+
                         var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
                         if (string.IsNullOrWhiteSpace(jti))
                         {
