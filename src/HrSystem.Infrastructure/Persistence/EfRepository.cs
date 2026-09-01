@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using HrSystem.Application;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,18 +14,20 @@ public class EfRepository<T>(AppDbContext db) : IRepository<T> where T : class
         Set.FindAsync([id], cancellationToken).AsTask();
 
     public Task<List<TResult>> QueryAsync<TResult>(
-        System.Linq.Expressions.Expression<Func<T, TResult>> selector,
-        System.Linq.Expressions.Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, TResult>> selector,
+        Expression<Func<T, bool>>? predicate = null,
         int skip = 0,
-        int take = int.MaxValue,
+        int take = 100,
         CancellationToken cancellationToken = default)
     {
+        if (skip < 0) throw new ArgumentOutOfRangeException(nameof(skip));
+        if (take <= 0) throw new ArgumentOutOfRangeException(nameof(take));
+
         IQueryable<T> query = Set.AsNoTracking();
         if (predicate is not null)
             query = query.Where(predicate);
 
         return query
-            .OrderBy(e => EF.Property<object>(e, "Id"))
             .Skip(skip)
             .Take(take)
             .Select(selector)
@@ -32,7 +35,7 @@ public class EfRepository<T>(AppDbContext db) : IRepository<T> where T : class
     }
 
     public Task<int> CountAsync(
-        System.Linq.Expressions.Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>>? predicate = null,
         CancellationToken cancellationToken = default) =>
         predicate is null ? Set.CountAsync(cancellationToken) : Set.CountAsync(predicate, cancellationToken);
 
