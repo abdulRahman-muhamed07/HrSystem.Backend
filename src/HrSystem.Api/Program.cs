@@ -1,7 +1,5 @@
 using HrSystem.Api.Extensions;
 using HrSystem.Api.Middleware;
-using HrSystem.Api.Security;
-using HrSystem.Application.Abstractions.Security;
 using HrSystem.Application.DependencyInjection;
 using HrSystem.Infrastructure;
 using HrSystem.Infrastructure.Persistence;
@@ -12,8 +10,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment.IsDevelopment());
 builder.Services.AddApiProblemDetails();
 builder.Services.AddApiRateLimiting();
