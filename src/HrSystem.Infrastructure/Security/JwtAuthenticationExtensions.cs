@@ -1,12 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using HrSystem.Application;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace HrSystem.Infrastructure.Security;
 
@@ -20,48 +16,18 @@ public static class JwtAuthenticationExtensions
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.Key), "Jwt:Key is required.")
-            .Validate(options => Encoding.UTF8.GetByteCount(options.Key) >= 32, "Jwt:Key must be at least 32 bytes.")
+            .Validate(options => System.Text.Encoding.UTF8.GetByteCount(options.Key) >= 32, "Jwt:Key must be at least 32 bytes.")
             .Validate(options => options.ExpirationMinutes is > 0 and <= 60, "Jwt:ExpirationMinutes must be between 1 and 60 minutes.")
             .Validate(options => options.RefreshTokenExpirationDays is >= 1 and <= 30, "Jwt:RefreshTokenExpirationDays must be between 1 and 30 days.")
             .ValidateOnStart();
 
+        services.AddSingleton<IConfigureOptions<JwtBearerOptions>>(
+            sp => new ConfigureJwtBearerOptions(
+                sp.GetRequiredService<IOptions<JwtOptions>>(),
+                isDevelopment));
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.RequireHttpsMetadata = !isDevelopment;
-                options.SaveToken = false;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.FromSeconds(30)
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnTokenValidated = async context =>
-                    {
-                        var jwt = context.HttpContext.RequestServices.GetRequiredService<IOptions<JwtOptions>>().Value;
-                        context.Options.TokenValidationParameters.IssuerSigningKey =
-                            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));
-                        context.Options.TokenValidationParameters.ValidIssuer = jwt.Issuer;
-                        context.Options.TokenValidationParameters.ValidAudience = jwt.Audience;
-
-                        var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
-                        if (string.IsNullOrWhiteSpace(jti))
-                        {
-                            context.Fail("The access token is missing a token identifier.");
-                            return;
-                        }
-
-                        var revocation = context.HttpContext.RequestServices.GetRequiredService<ITokenRevocationService>();
-                        if (await revocation.IsRevokedAsync(jti, context.HttpContext.RequestAborted))
-                            context.Fail("The access token has been revoked.");
-                    }
-                };
-            });
+            .AddJwtBearer();
 
         services.AddAuthorization();
         return services;
