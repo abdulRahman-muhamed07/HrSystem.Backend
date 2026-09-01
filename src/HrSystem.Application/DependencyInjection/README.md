@@ -1,0 +1,1 @@
+Application dependency-injection registration lives in this folder so composition-root concerns stay separate from feature logic.
