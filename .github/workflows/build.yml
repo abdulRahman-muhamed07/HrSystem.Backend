@@ -14,6 +14,9 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - run: dotnet restore HrSystem.Backend.slnx
-      - run: dotnet build HrSystem.Backend.slnx --configuration Release --no-restore
-      - run: dotnet test HrSystem.Backend.slnx --configuration Release --no-build --verbosity normal
+      - name: Restore
+        run: dotnet restore HrSystem.Backend.slnx
+      - name: Build
+        run: dotnet build HrSystem.Backend.slnx --configuration Release --no-restore
+      - name: Test
+        run: dotnet test HrSystem.Backend.slnx --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
