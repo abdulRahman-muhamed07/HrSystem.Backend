@@ -13,16 +13,25 @@ dotnet user-secrets --project src/HrSystem.Api set "ConnectionStrings:DefaultCon
 dotnet user-secrets --project src/HrSystem.Api set "Jwt:Key" "<long-random-secret-at-least-32-characters>"
 ```
 
+Redis is optional for local development. Without a Redis connection, token revocation uses the in-process distributed-memory cache.
+
+To use Redis locally:
+
+```bash
+dotnet user-secrets --project src/HrSystem.Api set "ConnectionStrings:Redis" "localhost:6379"
+```
+
 ## Production
 
 Provide secrets through environment variables or a platform secret manager. ASP.NET Core maps `__` in environment variables to `:` in configuration keys.
 
 ```text
 ConnectionStrings__DefaultConnection=<production-sql-server-connection-string>
+ConnectionStrings__Redis=<redis-connection-string>
 Jwt__Key=<long-random-secret-at-least-32-characters>
 ```
 
-Do not put production credentials, passwords, API keys, or JWT signing keys in tracked `appsettings.json` files.
+Do not put production credentials, passwords, API keys, Redis connection strings, or JWT signing keys in tracked `appsettings.json` files.
 
 ## Non-secret configuration
 
