@@ -7,6 +7,7 @@ using HrSystem.Application.Features.Auditing;
 using HrSystem.Application.Features.Dashboard;
 using HrSystem.Application.Features.Departments;
 using HrSystem.Application.Features.Employees;
+using HrSystem.Application.Features.Employees.Contracts;
 using HrSystem.Application.Features.LeaveBalances;
 using HrSystem.Application.Features.Leaves;
 using HrSystem.Application.Features.Loans;
@@ -17,7 +18,7 @@ using HrSystem.Application.Mapping;
 using HrSystem.Application.Services;
 using HrSystem.Application.Validators.Authentication;
 
-namespace HrSystem.Application;
+namespace HrSystem.Application.DependencyInjection;
 
 public static class ApplicationServiceRegistration
 {

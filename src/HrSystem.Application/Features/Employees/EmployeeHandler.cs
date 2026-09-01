@@ -1,4 +1,5 @@
 using HrSystem.Application;
+using HrSystem.Application.Features.Employees.Contracts;
 using HrSystem.Application.Models.Common;
 using HrSystem.Application.Models.Employees;
 

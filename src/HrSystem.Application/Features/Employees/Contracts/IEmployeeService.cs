@@ -1,4 +1,4 @@
-namespace HrSystem.Application;
+namespace HrSystem.Application.Features.Employees.Contracts;
 
 public interface IEmployeeService
 {

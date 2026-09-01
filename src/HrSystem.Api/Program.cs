@@ -1,8 +1,11 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using HrSystem.Api.Extensions;
 using HrSystem.Api.Middleware;
 using HrSystem.Api.Security;
-using HrSystem.Application;
+using HrSystem.Application.Abstractions.Security;
+using HrSystem.Application.DependencyInjection;
 using HrSystem.Infrastructure;
 using HrSystem.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -31,6 +34,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.FromSeconds(30)
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
+            if (string.IsNullOrWhiteSpace(jti))
+            {
+                context.Fail("The access token is missing a token identifier.");
+                return;
+            }
+
+            var revocation = context.HttpContext.RequestServices.GetRequiredService<ITokenRevocationService>();
+            if (await revocation.IsRevokedAsync(jti, context.HttpContext.RequestAborted))
+                context.Fail("The access token has been revoked.");
+        }
     };
 });
 builder.Services.AddAuthorization();
