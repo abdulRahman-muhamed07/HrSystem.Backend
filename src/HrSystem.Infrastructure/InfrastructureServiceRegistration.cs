@@ -1,4 +1,5 @@
 using HrSystem.Application;
+using HrSystem.Application.Abstractions.Security;
 using HrSystem.Infrastructure.Auditing;
 using HrSystem.Infrastructure.Persistence;
 using HrSystem.Infrastructure.Persistence.Repositories;
@@ -24,6 +25,8 @@ public static class InfrastructureServiceRegistration
         else
             services.AddStackExchangeRedisCache(options => options.Configuration = redisConnection);
 
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
