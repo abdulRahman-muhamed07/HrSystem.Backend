@@ -1,6 +1,4 @@
-using HrSystem.Application.Models.Authentication;
-
-namespace HrSystem.Application.Features.Authentication.Contracts;
+namespace HrSystem.Application;
 
 public interface IAuthService
 {

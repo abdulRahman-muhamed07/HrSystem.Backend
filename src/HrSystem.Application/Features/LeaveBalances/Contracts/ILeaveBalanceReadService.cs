@@ -1,6 +1,6 @@
 using HrSystem.Application.Models.Leaves;
 
-namespace HrSystem.Application.Features.LeaveBalances.Contracts;
+namespace HrSystem.Application;
 
 public interface ILeaveBalanceReadService
 {

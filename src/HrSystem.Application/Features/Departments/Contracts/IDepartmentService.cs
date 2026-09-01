@@ -1,6 +1,4 @@
-using HrSystem.Application.Models.Departments;
-
-namespace HrSystem.Application.Features.Departments.Contracts;
+namespace HrSystem.Application;
 
 public interface IDepartmentService
 {

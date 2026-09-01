@@ -1,7 +1,4 @@
-using HrSystem.Application.Models.Employees;
-using HrSystem.Application.Models.Common;
-
-namespace HrSystem.Application.Features.Employees.Contracts;
+namespace HrSystem.Application;
 
 public interface IEmployeeService
 {

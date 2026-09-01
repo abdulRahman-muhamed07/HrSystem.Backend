@@ -1,7 +1,4 @@
-using HrSystem.Application.Models.Attendance;
-using HrSystem.Application.Models.Common;
-
-namespace HrSystem.Application.Features.Attendance.Contracts;
+namespace HrSystem.Application;
 
 public interface IAttendanceService
 {

@@ -1,6 +1,4 @@
-using HrSystem.Application.Models.Payroll;
-
-namespace HrSystem.Application.Features.Payroll.Contracts;
+namespace HrSystem.Application;
 
 public interface IPayrollService
 {

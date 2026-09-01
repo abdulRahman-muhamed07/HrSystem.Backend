@@ -1,6 +1,4 @@
-using HrSystem.Application.Models.Dashboard;
-
-namespace HrSystem.Application.Features.Dashboard.Contracts;
+namespace HrSystem.Application;
 
 public interface IDashboardService
 {

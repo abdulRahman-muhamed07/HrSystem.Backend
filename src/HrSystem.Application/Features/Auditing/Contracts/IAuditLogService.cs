@@ -1,6 +1,6 @@
 using HrSystem.Application.Models.Auditing;
 
-namespace HrSystem.Application.Features.Auditing.Contracts;
+namespace HrSystem.Application;
 
 public interface IAuditLogService
 {
