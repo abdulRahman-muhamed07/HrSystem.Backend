@@ -14,10 +14,15 @@ public static class InfrastructureServiceRegistration
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required. Provide it through User Secrets in development or environment/secret configuration in production.");
+            ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
 
-        services.AddMemoryCache();
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+
+        var redisConnection = configuration.GetConnectionString("Redis");
+        if (string.IsNullOrWhiteSpace(redisConnection))
+            services.AddDistributedMemoryCache();
+        else
+            services.AddStackExchangeRedisCache(options => options.Configuration = redisConnection);
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
@@ -28,7 +33,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
-        services.AddSingleton<ITokenRevocationService, InMemoryTokenRevocationService>();
+        services.AddSingleton<ITokenRevocationService, DistributedTokenRevocationService>();
         services.AddScoped<IAuditService, AuditService>();
 
         return services;
