@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using HrSystem.Application;
+using Microsoft.AspNetCore.Http;
 
 namespace HrSystem.Infrastructure.Security;
 
