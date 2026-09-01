@@ -14,15 +14,11 @@ public static class InfrastructureServiceRegistration
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection") ?? "Data Source=hrsystem.db";
-        var provider = configuration["Database:Provider"]?.ToLowerInvariant() ?? "sqlite";
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
 
         services.AddMemoryCache();
-        services.AddDbContext<AppDbContext>(options =>
-        {
-            if (provider == "sqlserver") options.UseSqlServer(connectionString);
-            else options.UseSqlite(connectionString);
-        });
+        services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
