@@ -1,6 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using HrSystem.Api.Extensions;
 using HrSystem.Api.Middleware;
 using HrSystem.Api.Security;
@@ -8,8 +5,7 @@ using HrSystem.Application.Abstractions.Security;
 using HrSystem.Application.DependencyInjection;
 using HrSystem.Infrastructure;
 using HrSystem.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using HrSystem.Infrastructure.Security;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,46 +14,7 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
-
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key is required. Configure it through User Secrets or environment variables.");
-if (jwtKey.Length < 32)
-    throw new InvalidOperationException("Jwt:Key must be at least 32 characters.");
-
-var issuer = builder.Configuration["Jwt:Issuer"] ?? "HrSystem.Api";
-var audience = builder.Configuration["Jwt:Audience"] ?? "HrSystem.Client";
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = issuer,
-        ValidAudience = audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        ClockSkew = TimeSpan.FromSeconds(30)
-    };
-
-    options.Events = new JwtBearerEvents
-    {
-        OnTokenValidated = async context =>
-        {
-            var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
-            if (string.IsNullOrWhiteSpace(jti))
-            {
-                context.Fail("The access token is missing a token identifier.");
-                return;
-            }
-
-            var revocation = context.HttpContext.RequestServices.GetRequiredService<ITokenRevocationService>();
-            if (await revocation.IsRevokedAsync(jti, context.HttpContext.RequestAborted))
-                context.Fail("The access token has been revoked.");
-        }
-    };
-});
-builder.Services.AddAuthorization();
+builder.Services.AddJwtAuthentication(builder.Configuration, builder.Environment.IsDevelopment());
 builder.Services.AddApiProblemDetails();
 builder.Services.AddApiRateLimiting();
 
