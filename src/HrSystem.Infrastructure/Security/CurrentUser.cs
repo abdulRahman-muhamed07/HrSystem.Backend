@@ -1,17 +1,13 @@
 using System.Security.Claims;
-using HrSystem.Application.Abstractions.Security;
-using Microsoft.AspNetCore.Http;
+using HrSystem.Application;
 
 namespace HrSystem.Infrastructure.Security;
 
-public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
+internal sealed class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUser
 {
-    public int? UserId =>
-        int.TryParse(
-            accessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? accessor.HttpContext?.User.FindFirstValue("sub"),
-            out var id) ? id : null;
+    private ClaimsPrincipal Principal => httpContextAccessor.HttpContext?.User ?? new ClaimsPrincipal();
 
-    public string? UserName => accessor.HttpContext?.User.FindFirstValue(ClaimTypes.Name);
-    public string? Role => accessor.HttpContext?.User.FindFirstValue(ClaimTypes.Role);
+    public int? UserId => int.TryParse(Principal.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+    public string? UserName => Principal.FindFirstValue(ClaimTypes.Name) ?? Principal.FindFirstValue("unique_name");
+    public string? Role => Principal.FindFirstValue(ClaimTypes.Role) ?? Principal.FindFirstValue("role");
 }

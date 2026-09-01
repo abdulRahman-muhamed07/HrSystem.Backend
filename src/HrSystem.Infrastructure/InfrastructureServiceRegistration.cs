@@ -1,5 +1,4 @@
 using HrSystem.Application;
-using HrSystem.Application.Abstractions.Security;
 using HrSystem.Infrastructure.Auditing;
 using HrSystem.Infrastructure.Persistence;
 using HrSystem.Infrastructure.Persistence.Repositories;
