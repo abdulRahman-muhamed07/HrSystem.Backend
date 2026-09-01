@@ -4,7 +4,6 @@ using HrSystem.Infrastructure.Persistence;
 using HrSystem.Infrastructure.Persistence.Repositories;
 using HrSystem.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,7 +14,7 @@ public static class InfrastructureServiceRegistration
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
+            ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required. Provide it through User Secrets in development or environment/secret configuration in production.");
 
         services.AddMemoryCache();
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
