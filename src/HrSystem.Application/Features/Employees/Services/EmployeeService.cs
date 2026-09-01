@@ -1,6 +1,7 @@
 using AutoMapper;
 using FluentValidation;
 using HrSystem.Application.Exceptions;
+using HrSystem.Application.Features.Employees.Contracts;
 using HrSystem.Application.Models.Employees;
 using HrSystem.Application.Validation;
 using HrSystem.Domain.Entities;
