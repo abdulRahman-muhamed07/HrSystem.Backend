@@ -1,4 +1,4 @@
-namespace HrSystem.Application;
+namespace HrSystem.Application.Abstractions.Security;
 
 public interface ICurrentUser
 {

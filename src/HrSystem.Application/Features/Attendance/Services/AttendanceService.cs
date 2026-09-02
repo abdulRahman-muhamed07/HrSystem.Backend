@@ -3,7 +3,7 @@ using HrSystem.Application.Exceptions;
 using HrSystem.Domain.Entities;
 using HrSystem.Domain.Enums;
 
-namespace HrSystem.Application.Services;
+namespace HrSystem.Application.Features.Attendance.Services;
 
 public sealed class AttendanceService(
     IRepository<AttendanceRecord> attendance,

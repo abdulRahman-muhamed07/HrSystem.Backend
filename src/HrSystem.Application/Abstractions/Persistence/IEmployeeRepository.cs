@@ -1,6 +1,6 @@
 using HrSystem.Domain.Entities;
 
-namespace HrSystem.Application;
+namespace HrSystem.Application.Abstractions.Persistence;
 
 public interface IEmployeeRepository : IRepository<Employee>
 {

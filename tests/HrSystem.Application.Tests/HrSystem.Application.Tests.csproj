@@ -14,5 +14,6 @@
   <ItemGroup>
     <ProjectReference Include="../../src/HrSystem.Application/HrSystem.Application.csproj" />
     <ProjectReference Include="../../src/HrSystem.Domain/HrSystem.Domain.csproj" />
+    <ProjectReference Include="../../src/HrSystem.Infrastructure/HrSystem.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
