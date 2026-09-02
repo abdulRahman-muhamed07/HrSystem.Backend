@@ -1,4 +1,4 @@
-using HrSystem.Application;
+using HrSystem.Application.Abstractions.Persistence;
 using HrSystem.Domain;
 using HrSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
