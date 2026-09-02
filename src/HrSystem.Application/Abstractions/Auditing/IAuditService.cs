@@ -1,4 +1,4 @@
-namespace HrSystem.Application;
+namespace HrSystem.Application.Abstractions.Auditing;
 
 public interface IAuditService
 {
