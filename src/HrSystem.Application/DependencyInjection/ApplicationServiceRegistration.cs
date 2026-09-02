@@ -2,6 +2,7 @@ using AutoMapper;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using HrSystem.Application.Features.Attendance;
+using HrSystem.Application.Features.Attendance.Services;
 using HrSystem.Application.Features.Authentication;
 using HrSystem.Application.Features.Auditing;
 using HrSystem.Application.Features.Dashboard;
