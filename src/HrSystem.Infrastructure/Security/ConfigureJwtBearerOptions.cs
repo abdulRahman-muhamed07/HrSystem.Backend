@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using HrSystem.Application;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -43,13 +44,7 @@ internal sealed class ConfigureJwtBearerOptions(IOptions<JwtOptions> jwtOptions,
                 }
 
                 var revocation = context.HttpContext.RequestServices
-                    .GetService<ITokenRevocationService>();
-
-                if (revocation is null)
-                {
-                    context.Fail("Token revocation service is not configured.");
-                    return;
-                }
+                    .GetRequiredService<ITokenRevocationService>();
 
                 if (await revocation.IsRevokedAsync(jti, context.HttpContext.RequestAborted))
                     context.Fail("The access token has been revoked.");
