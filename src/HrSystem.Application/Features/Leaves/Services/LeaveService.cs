@@ -15,8 +15,18 @@ public sealed class LeaveService(
     ICurrentUser currentUser,
     IMapper mapper) : ILeaveService
 {
+    private bool IsHrOrAdmin() => currentUser.Role is nameof(UserRole.Admin) or nameof(UserRole.HR);
+
+    private void EnsureEmployeeAccess(int employeeId)
+    {
+        if (!IsHrOrAdmin() && currentUser.EmployeeId != employeeId)
+            throw new BusinessRuleException("You can only access your own leave requests.");
+    }
+
     public async Task<int> CreateAsync(CreateLeaveRequest request, CancellationToken ct)
     {
+        EnsureEmployeeAccess(request.EmployeeId);
+
         if (request.EndDate.Date < request.StartDate.Date)
             throw new BusinessRuleException("End date cannot be before start date.");
 
@@ -66,23 +76,31 @@ public sealed class LeaveService(
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var predicate = status.HasValue
-            ? (System.Linq.Expressions.Expression<Func<LeaveRequest, bool>>)(l => l.Status == status.Value)
-            : null;
+        System.Linq.Expressions.Expression<Func<LeaveRequest, bool>> predicate;
+        if (IsHrOrAdmin())
+        {
+            predicate = status.HasValue
+                ? l => l.Status == status.Value
+                : l => true;
+        }
+        else
+        {
+            var employeeId = currentUser.EmployeeId ?? throw new BusinessRuleException("Employee context is required.");
+            predicate = status.HasValue
+                ? l => l.EmployeeId == employeeId && l.Status == status.Value
+                : l => l.EmployeeId == employeeId;
+        }
 
         var total = await leaves.CountAsync(predicate, ct);
-        var entities = await leaves.QueryAsync(
-            l => l,
-            predicate,
-            (page - 1) * pageSize,
-            pageSize,
-            ct);
-
+        var entities = await leaves.QueryAsync(l => l, predicate, (page - 1) * pageSize, pageSize, ct);
         return new(mapper.Map<List<LeaveRequestDto>>(entities), page, pageSize, total);
     }
 
     public async Task DecideAsync(int id, LeaveDecisionRequest request, CancellationToken ct)
     {
+        if (!IsHrOrAdmin())
+            throw new BusinessRuleException("Only HR or Admin users can decide leave requests.");
+
         var leave = await leaves.GetByIdAsync(id, ct)
             ?? throw new NotFoundException("Leave request was not found.");
 
