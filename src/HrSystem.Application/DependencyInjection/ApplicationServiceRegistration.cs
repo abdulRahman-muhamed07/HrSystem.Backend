@@ -8,12 +8,16 @@ using HrSystem.Application.Features.Dashboard;
 using HrSystem.Application.Features.Departments;
 using HrSystem.Application.Features.Employees;
 using HrSystem.Application.Features.Employees.Contracts;
+using HrSystem.Application.Features.EmployeeDocuments;
+using HrSystem.Application.Features.Holidays;
 using HrSystem.Application.Features.LeaveBalances;
 using HrSystem.Application.Features.Leaves;
 using HrSystem.Application.Features.Loans;
 using HrSystem.Application.Features.Overtime;
 using HrSystem.Application.Features.Payroll;
+using HrSystem.Application.Features.PayrollRules;
 using HrSystem.Application.Features.Users;
+using HrSystem.Application.Features.WorkSchedules;
 using HrSystem.Application.Mapping;
 using HrSystem.Application.Services;
 using HrSystem.Application.Validators.Authentication;
@@ -54,6 +58,10 @@ public static class ApplicationServiceRegistration
         services.AddScoped<UserHandler>();
         services.AddScoped<DashboardHandler>();
         services.AddScoped<AuditLogHandler>();
+        services.AddScoped<WorkScheduleHandler>();
+        services.AddScoped<HolidayHandler>();
+        services.AddScoped<EmployeeDocumentHandler>();
+        services.AddScoped<PayrollRuleHandler>();
 
         return services;
     }
