@@ -26,7 +26,7 @@ public static class InfrastructureServiceRegistration
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
-        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<IUnitOfWork>(sp => (AppDbContext)sp.GetService(typeof(AppDbContext))!);
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
