@@ -43,7 +43,13 @@ internal sealed class ConfigureJwtBearerOptions(IOptions<JwtOptions> jwtOptions,
                 }
 
                 var revocation = context.HttpContext.RequestServices
-                    .GetRequiredService<ITokenRevocationService>();
+                    .GetService<ITokenRevocationService>();
+
+                if (revocation is null)
+                {
+                    context.Fail("Token revocation service is not configured.");
+                    return;
+                }
 
                 if (await revocation.IsRevokedAsync(jti, context.HttpContext.RequestAborted))
                     context.Fail("The access token has been revoked.");
