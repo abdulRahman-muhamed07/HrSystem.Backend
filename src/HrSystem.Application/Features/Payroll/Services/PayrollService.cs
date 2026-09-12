@@ -4,7 +4,7 @@ using HrSystem.Domain.Enums;
 
 namespace HrSystem.Application.Services;
 
-public sealed class PayrollService(IRepository<PayrollRecord> payroll, IRepository<Employee> employees, IRepository<OvertimeRequest> overtime, IRepository<EmployeeLoan> loans, IUnitOfWork unitOfWork, IAuditService audit) : IPayrollService
+public sealed class PayrollService(IRepository<PayrollRecord> payroll, IRepository<Employee> employees, IRepository<OvertimeRequest> overtime, IRepository<EmployeeLoan> loans, IRepository<PayrollRule> payrollRules, IUnitOfWork unitOfWork, IAuditService audit) : IPayrollService
 {
     public async Task<PayrollDto> GenerateAsync(int employeeId, int year, int month, CancellationToken ct)
     {
@@ -17,7 +17,10 @@ public sealed class PayrollService(IRepository<PayrollRecord> payroll, IReposito
         var overtimePay = overtimeHours.Sum(x => employee.Salary / 22m / 8m * x.Hours * x.RateMultiplier);
         var loanDeduction = (await loans.QueryAsync(l => l.MonthlyDeduction, l => l.EmployeeId == employeeId && l.Status == LoanStatus.Approved && l.RemainingAmount > 0, 0, int.MaxValue, ct)).Sum();
         var gross = employee.Salary + employee.HousingAllowance + employee.TransportationAllowance + employee.MealAllowance + overtimePay;
-        var gosiEmployee = Math.Round(gross * 0.10m, 2);
+        var gosiRule = (await payrollRules.QueryAsync(x => new { x.Name, x.Value, x.IsPercentage }, x => x.Name == "GOSI_EMPLOYEE" && x.IsActive, 0, 1, ct)).FirstOrDefault();
+        var gosiEmployee = gosiRule is null
+            ? Math.Round(gross * 0.10m, 2)
+            : gosiRule.IsPercentage ? Math.Round(gross * gosiRule.Value / 100m, 2) : gosiRule.Value;
         var record = new PayrollRecord(employeeId, year, month);
         record.Calculate(employee.Salary, employee.HousingAllowance, employee.TransportationAllowance, employee.MealAllowance, 0, overtimePay, gosiEmployee, 0, 0, Math.Min(loanDeduction, gross - gosiEmployee), 0);
         await payroll.AddAsync(record, ct); await unitOfWork.SaveChangesAsync(ct);
