@@ -29,13 +29,16 @@ public sealed class Employee : IConcurrencyTracked
     public DateTime? ContractEndDate { get; private set; }
     public string? BankName { get; private set; }
     public string? BankAccountNumber { get; private set; }
+    public int? WorkScheduleId { get; private set; }
     public Department? Department { get; private set; }
+    public WorkSchedule? WorkSchedule { get; private set; }
     public ICollection<AttendanceRecord> AttendanceRecords { get; private set; } = new List<AttendanceRecord>();
     public ICollection<LeaveRequest> LeaveRequests { get; private set; } = new List<LeaveRequest>();
     public ICollection<EmployeeLeaveBalance> LeaveBalances { get; private set; } = new List<EmployeeLeaveBalance>();
     public ICollection<OvertimeRequest> OvertimeRequests { get; private set; } = new List<OvertimeRequest>();
     public ICollection<EmployeeLoan> Loans { get; private set; } = new List<EmployeeLoan>();
     public ICollection<PayrollRecord> PayrollRecords { get; private set; } = new List<PayrollRecord>();
+    public ICollection<EmployeeDocument> Documents { get; private set; } = new List<EmployeeDocument>();
     private Employee() { }
     public Employee(string fullName, string email, string jobTitle, int departmentId, decimal salary, DateTime hireDate)
     { FullName = fullName.Trim(); Email = email.Trim().ToLowerInvariant(); JobTitle = jobTitle.Trim(); DepartmentId = departmentId; Salary = salary; HireDate = hireDate; }
