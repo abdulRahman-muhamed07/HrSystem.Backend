@@ -20,17 +20,23 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : ITokenServic
             new SymmetricSecurityKey(key),
             SecurityAlgorithms.HmacSha256);
 
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Name, user.FullName),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, user.Role.ToString())
+        };
+
+        if (user.EmployeeId.HasValue)
+            claims.Add(new Claim("employee_id", user.EmployeeId.Value.ToString()));
+
         var token = new JwtSecurityToken(
             issuer: _jwt.Issuer,
             audience: _jwt.Audience,
-            claims:
-            [
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
-                new Claim(ClaimTypes.Name, user.FullName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
-            ],
+            claims: claims,
             expires: expires,
             signingCredentials: credentials);
 
